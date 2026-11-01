@@ -1,0 +1,33 @@
+SHELL RC PRO | BACK / SELECT = RECONEXAO RAPIDA
+Configurado em 31/10/2026
+
+Botao do Xbox 360: BACK (indice SDL/pygame 6).
+Atalho alternativo no teclado: F5.
+
+ACAO
+1. Desarma imediatamente a tracao no software e cancela transmissao BLE pendente.
+2. Tenta enviar pacote NEUTRO e fechar conexao antiga.
+3. Reusa a identidade Bluetooth da mesma Ferrari.
+4. Tenta conectar diretamente, evitando busca completa quando possivel.
+5. Quando reconecta, continua DESARMADO. Pressione START (gatilhos soltos).
+6. Se nao encontra o carro, mantem o modo desarmado e continua tentando.
+
+TEMPOS AJUSTAVEIS: config.json (milissegundos)
+back_button: 6
+back_debounce_ms: 350
+back_neutral_timeout_ms: 250
+back_disconnect_timeout_ms: 700
+back_retry_delay_ms: 120
+back_find_timeout_ms: 1200
+back_connect_timeout_ms: 3500
+
+OBSERVACOES
+- O tempo em ms e uma configuracao de software, NAO promessa de conclusao de conexao.
+- Se o Bluetooth ou firmware do carrinho travar fisicamente, BACK pode nao funcionar.
+- Se houver motor acionado sem resposta, DESLIGUE O CARRINHO. Back nao e corte eletrico.
+- Para primeiros testes, deixe rodas suspensas.
+- Modo --live: executa BLE real. Sem --live: reset apenas simulado.
+- Modo --hybrid-live: BACK nao reconecta a interface hibrida.
+- Testes 31/10: 60 unitarios; integracao BLE simulada, sem carrinho fisico.
+- Todas as alteracoes restritas a Shell_RC_Pro_Xbox360.
+- Backup: shell_rc_xbox360.py.backup_before_back_reconnect_20261031.

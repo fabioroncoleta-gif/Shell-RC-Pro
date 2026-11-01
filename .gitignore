@@ -1,0 +1,30 @@
+# Ambientes locais e caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+# Credenciais, dados locais e preferencias do carrinho
+.env
+.env.*
+*.pem
+*.key
+*.p12
+config.json
+fleet.json
+# Logs, snapshots e backups
+*.log
+*.log.*
+*.backup*
+*.before*
+*V3_backup*
+*.tar
+*.tar.gz
+*.zip
+_patch_*.py
+# Arduino ESP32: fontes versionados, toolchains/builds excluidos
+HW_PWM/toolchain/
+**/build/
+# Artefatos auxiliares
+.DS_Store

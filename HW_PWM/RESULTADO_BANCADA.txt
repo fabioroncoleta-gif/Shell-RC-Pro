@@ -1,0 +1,11 @@
+TESTE OFFLINE - PROPOSTA PWM ELETRICO (NAO TESTADO NO CARRINHO)
+Simulacao gera apenas instrucoes para uma ponte H hipotetica do tipo DRV8833.
+Frequencia PWM de projeto: 20 kHz (somente referencia; a placa ainda nao foi identificada).
+Contrastando: programa BLE antigo usa comandos de motor a ~20 Hz, com ON/OFF bruto.
+20 kHz / 20 Hz = 1000 ciclos PWM por cada intervalo BLE (nao e medicao real).
+CENARIO: 0-2 s RT 82%; 2-2.6 s LB; 2.6-3.5 s RT 82%; 3.5-4 s neutro; 4-6 s re 68%.
+Tempo de simulação 6 s, passo 10 ms.
+Estados na simulação: FORWARD_PWM=2800ms, BRAKE=600ms, COAST=600ms, REVERSE_PWM=2000ms
+DADOS: simulacao_pwm_20kHz.csv
+ATENCAO: duty e comando virtual, nao RPM medido nem potencia eletrica real.
+SIMULACAO APROVADA somente para sequenciamento logico, SEM SEGURANCA ELETRICA VALIDADA.

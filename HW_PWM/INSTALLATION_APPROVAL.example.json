@@ -1,0 +1,15 @@
+{
+  "_warning": "MODELO. NAO RENOMEAR PARA APPROVAL ATE VISTORIA FISICA E MEDICOES",
+  "motor_isolated_from_u6": false,
+  "drv8833_or_equivalent_physically_installed": false,
+  "wiring_inspected": false,
+  "motor_current_measured": false,
+  "power_supply_measured": false,
+  "wheels_up_bench_passed": false,
+  "actual_supply_voltage_v": null,
+  "measured_motor_stall_current_a": null,
+  "driver_peak_rating_a": null,
+  "inspector": "",
+  "date": "",
+  "notes": ""
+}

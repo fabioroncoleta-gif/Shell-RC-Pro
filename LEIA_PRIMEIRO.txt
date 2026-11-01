@@ -1,0 +1,57 @@
+SHELL RC PRO - Xbox 360 SEM FIO + RECEP. USB + Ferrari Shell 488 Challenge Evo
+INSTALADO SOMENTE NA PASTA: <pasta-do-projeto>
+NAO ALTERA NEXO, ACESSOS REMOTOS, DRIVERS NEM CONFIGURACOES DO LINUX.
+
+PRIMEIROS PASSOS:
+1. Plugue o receptor USB Xbox 360 no notebook, emparelhe com o joystick.
+2. No terminal, execute:
+   cd ~/Shell_RC_Pro_Xbox360
+   ./run.sh --inspect
+   Mova analogico esquerdo e RT/LT. Confira os indices de eixos.
+3. Feche com Ctrl+C. Abra o atalho "Shell RC Pro - Teste" na area de trabalho.
+   MODO TESTE NUNCA ENVIA BLUETOOTH PARA O CARRINHO.
+4. Se a entrada nao variar corretamente, ajuste steering_axis / lt_axis /
+   rt_axis no config.json usando os indices observados em --inspect.
+5. Para o PRIMEIRO teste real, deixe a Ferrari com rodas suspensas e
+   DESLIGUE a conexao do aplicativo oficial Shell no celular.
+6. Abra o atalho "Shell RC Pro - Ferrari". Aguarde BLE conectado.
+7. Aperte START no controle, deixe gatilhos soltos e analogico neutro 1,5s.
+8. RT = frente, LT = re, analogico esquerdo = direcao digital.
+   ESC desarma. Q encerra. Desligue fisicamente o carro caso BLE falhe.
+
+SEGURANCA:
+O carrinho recebe somente comandos digitais frente/re/parar/direcao.
+O gatilho analogico e convertido em pulsos de aproximadamente 120ms,
+com rampa experimental, e NAO oferece velocidade proporcional garantida.
+Em perda de Bluetooth, o programa pode nao conseguir transmitir a parada.
+Use em bancada com rodas suspensas antes de por no chao.
+
+FONTES DO PROTOCOLO:
+https://github.com/mesailde/ShellRacingRemote
+Serviço FFF0 / caracteristica FFF1; pacote 8 bytes.
+
+CARRO NAO ENCONTRADO? Nome BLE esperado comecando em SL- e contendo 488.
+Se for diferente, ajuste car_name_filter no config.json.
+RECEPTOR NAO DETECTADO? lsusb; confirme receptor Xbox 360 Wireless Receiver.
+
+ATUALIZACAO LB / FREIO SEGURO
+LB (indice 4): manter pressionado para enviar NEUTRO em vez de frente/re e desativar o turbo.
+Ao soltar LB, RT/LT mantido no mesmo sentido retoma a tracao; se o sentido mudou durante LB, exige soltar os dois gatilhos antes da inversao.
+Nao existe travamento mecanico nem freio dinamico comprovado na interface BLE FFF1.
+NAO alternar frente/re em milissegundos: pode causar picos de corrente e desgaste.
+O programa testa o estado do LB na taxa de leitura e envia neutro no proximo ciclo BLE (nominal 50 ms).
+Em perda de conexao BLE a parada nao e garantida. Testar sempre com rodas suspensas.
+
+ATUALIZACAO DE CONTROLE 30/10/2026 - V3
+MODO DIRETO (RB, com motor desarmado): sem pulsos; a partir de ~13% do gatilho RT/LT o comando binario de motor inicia imediatamente. Potencia permanece ON/OFF; nao ha curva fisica proporcional. Em aceleracao nao ha limite eletrico gradual; rodas podem partir abruptamente.
+LB FREIO DE MAO SIMULADO: ao pressionar, motor neutro, farois continuam, comando de direcao esquerdo/direito fica congelado no ultimo valor. O estado de aceleracao virtual e mantido. Ao soltar LB, o RT/LT mantido retoma; se o sentido do motor foi invertido durante LB, exige soltar os dois gatilhos antes de poder inverter.
+O programa NAO pode garantir que a mecanica da direcao preserve o angulo fisico (nao ha sensor de posicao). Tambem nao trava o eixo.
+TESTE HIPOTETICO DE REVERSAO FRENTE/RE: simulado SOMENTE OFFLINE em simulate_brake_reversal.py (gera RELATORIO_FREIO_SIMULACAO.txt). Alternar o sentido em milissegundos pode causar correntes elevadas/danos; NENHUM comando deste tipo foi instalado ou enviado ao carro.
+Teste com rodas suspensas, principalmente o modo direto que liga o motor com comando pleno.
+
+VALIDACAO FINAL 30/10/2026
+Testes locais: motor 14/14; freio 7/7; farois 5/5; controle Xbox automatizado PASS; compilacao Python PASS. Testes executados sem envio BLE ao carrinho.
+MODO DIRETO RB: acelera imediatamente com sinal ON/OFF, sem pulsos nem controle fisico de velocidade; curva de potencia progressiva exige PWM no hardware/firmware, nao demonstrado neste protocolo.
+MODO PULSOS RB: rampa experimental via comandos digitais, com possiveis trancos. Nao equivale a PWM fisico do motor.
+LB: freio simulado sem travamento do eixo. Preserva o comando de direcao no pacote, nao garante angulo real das rodas.
+Proxima verificacao fisica: testar rodas suspensas e validar movimento, respostas, alcance e parada segura; nao homologado em pista.

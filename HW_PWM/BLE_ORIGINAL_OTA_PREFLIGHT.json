@@ -1,0 +1,58 @@
+{
+  "time_utc": "2026-10-31T02:01:37.629068+00:00",
+  "name": "SL-488 Challenge Evo",
+  "address": "02:00:00:00:00:01",
+  "read_only": true,
+  "write_requests": 0,
+  "services": [
+    {
+      "uuid": "0000180f-0000-1000-8000-00805f9b34fb",
+      "characteristics": [
+        {
+          "uuid": "00002a19-0000-1000-8000-00805f9b34fb",
+          "properties": [
+            "read",
+            "notify"
+          ],
+          "battery_percent": 56
+        }
+      ]
+    },
+    {
+      "uuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+      "characteristics": [
+        {
+          "uuid": "0000fff2-0000-1000-8000-00805f9b34fb",
+          "properties": [
+            "notify"
+          ]
+        },
+        {
+          "uuid": "0000fff1-0000-1000-8000-00805f9b34fb",
+          "properties": [
+            "write-without-response",
+            "write",
+            "notify"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "00006936-0000-1000-8000-00805f9b34fb",
+      "characteristics": [
+        {
+          "uuid": "0000fe01-0000-1000-8000-00805f9b34fb",
+          "properties": [
+            "write-without-response",
+            "write",
+            "notify"
+          ]
+        }
+      ]
+    }
+  ],
+  "known_ota_service_identified": false,
+  "proprietary_ota_status": "UNKNOWN",
+  "flash_attempted": false,
+  "original_firmware_preserved": true
+}

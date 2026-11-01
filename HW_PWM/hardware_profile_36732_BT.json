@@ -1,0 +1,138 @@
+{
+  "profile_id": "shell-488-challenge-evo-36732-bt-v23",
+  "observed_from": "user photos 2026-10-30",
+  "visible_board_marking": "36732-BT",
+  "visible_revision": "V2.3 (photo)",
+  "model": "Bburago/Shell 488 Challenge Evo (model family 18-36732..18-36735; 488 = 18-36733)",
+  "vendor_manual_battery_spec_reference": {
+    "voltage_v": 3.2,
+    "capacity_mah": 100,
+    "verified_on_this_unit": false
+  },
+  "actual_battery_voltage_v": null,
+  "motor_operating_current_a": null,
+  "motor_stall_current_a": null,
+  "motor_driver_part_number": null,
+  "motor_driver_pinout_verified": false,
+  "controller_communication_pinout_verified": false,
+  "motor_wires_polarity_verified": false,
+  "steering_mechanism_visible": true,
+  "front_led_subboard_visible": true,
+  "firmware_enabled": false,
+  "hardware_pwm_enabled": false,
+  "dynamic_electrical_brake_enabled": false,
+  "reason": "U6 rear traction association confirmed by owner; 2008D BH-053 datasheet, pin mapping and current limits remain unknown; no safe physical PWM yet.",
+  "documentation": [
+    "https://device.report/manual/2538426",
+    "https://www.bburago.info/?id=ctl&lan=eng&sec=F-Bluetooth",
+    "https://fccid.io/PKG36734RC"
+  ],
+  "chip_macro_photo_2026_10_30": {
+    "position": "main black IC adjacent to metal crystal resonator",
+    "candidate": "YICHIP YC1063 family BLE microcontroller",
+    "identification_status": "candidate only; top marking illegible in supplied macro photo",
+    "confidence": "moderate for function as BLE SoC based on crystal context and published older Bburago teardown; low for specific chip model",
+    "motor_bridge_identified": false,
+    "motor_bridge_possible_location": "elsewhere on the board; this is not proven to be motor power driver",
+    "background_reference": "https://www.androidvt.com/blog/index.php?category=35&d=25&entry=entry240325-091926&m=03&y=24",
+    "hardware_modification_allowed": false
+  },
+  "main_soc": {
+    "model": "YC1323",
+    "reading": "YC1323 B003531 2549HAJD",
+    "visible_on_user_photo": true,
+    "function": "YICHIP Bluetooth microcontroller",
+    "family_reference": "https://www.yichip.com/yc13xx",
+    "pwm_in_stock_firmware": "not demonstrated",
+    "debug_access": "not characterized"
+  },
+  "driver_candidates": [
+    {
+      "board_position": "U2",
+      "marking": "2008D / BH-053",
+      "chip_function": "steering driver hypothesis, not electrically verified",
+      "pinout_verified": false
+    },
+    {
+      "board_position": "U6",
+      "marking": "2008D / BH-053",
+      "chip_function": "rear traction driver, confirmed by owner (exact pinout not verified)",
+      "pinout_verified": false,
+      "motor_association_confirmed_by_owner": true
+    }
+  ],
+  "other_chip": {
+    "board_position": "U5",
+    "marking": "3137 / C0AP (estimated photo)",
+    "function": "unconfirmed"
+  },
+  "driver_identity_status": "MARKINGS_KNOWN_DATASHEET_NOT_FOUND",
+  "drive_mapping_status": "Rear motor pair identified as yellow/red, soldered on M2-/M2+; U6 associated to motor by owner; U6 pinout/control inputs unverified",
+  "pwm_path_options": [
+    {
+      "path": "native firmware on YC1323",
+      "status": "blocked: original firmware/debug interface and pinout unverified"
+    },
+    {
+      "path": "hardware intermediate control before confirmed H-bridge inputs",
+      "status": "blocked: pinout/power specs and isolation not measured"
+    },
+    {
+      "path": "external custom board isolated from existing motor driver",
+      "status": "blocked: board dimensions and current measurements needed"
+    }
+  ],
+  "photos_updated": "2026-10-30 additional chassis and component-side shots",
+  "visual_hypotheses_not_verified": {
+    "U2_2008D_BH053": "steering drive candidate; NOT VERIFIED",
+    "blue_white_motor_pair": "possible front steering motor wiring; NOT VERIFIED"
+  },
+  "board_sides": {
+    "component_side": "photos provided",
+    "opposite_solder_trace_side": "not fully mapped by continuity; visible photo insufficient for U6 individual pinout",
+    "wire_solder_pad_side": "provided IMG_1405-1407, labels M1 and M2 legible"
+  },
+  "required_for_electrical_integration": {
+    "physical_map": "Measure continuity (powered off and cell electrically disconnected) from M2 yellow/red pads to U6 pins; verify both motor terminals can be isolated from original driver before any external H bridge",
+    "electrical_data": "battery voltage and motor running/stall current characterized with current-limited equipment by competent person",
+    "IC_docs": "reliable datasheet for 2008D / BH-053 or measured pinout",
+    "control": "verified control signal levels and bridge isolation, or separated aftermarket motor drive",
+    "mechanical": "fit and shielding of any add-on board; secure battery mounting"
+  },
+  "confirmed_traction_motor": {
+    "location": "rear axle",
+    "wires": [
+      "yellow",
+      "red"
+    ],
+    "location_of_pair": "left side of board/chassis in provided photos",
+    "evidence": "user directly confirmed the yellow/red wires on the left run to rear motor",
+    "electrical_polarity": "UNKNOWN; color is not proof of motor positive/negative",
+    "pcb_driver_connection": "UNKNOWN; U6 proximity alone is not verification",
+    "status": "CONFIRMED_PHYSICAL_WIRE_PAIR",
+    "pcb_driver_component": "U6",
+    "driver_association_source": "User confirmed U6 as driver of yellow/red rear traction motor wires",
+    "driver_association_status": "CONFIRMED_BY_OWNER_NO_PIN_MAPPING",
+    "pcb_connector_label": "M2",
+    "pcb_pad_wire_mapping": [
+      {
+        "pcb_silkscreen": "M2-",
+        "wire": "yellow",
+        "evidence": "IMG_1405/1407 user photographs, legend shown under pad",
+        "electrical_polarity_verified": false
+      },
+      {
+        "pcb_silkscreen": "M2+",
+        "wire": "red",
+        "evidence": "IMG_1405/1407 user photographs, legend shown under pad",
+        "electrical_polarity_verified": false
+      }
+    ],
+    "pad_mapping_status": "PHOTO_CONFIRMED_M2_LABELS_NOT_LIVE_POLARITY"
+  },
+  "other_motor_channel": {
+    "pcb_silkscreen": "M1+/M1-",
+    "expected_function": "steering drive (not confirmed)",
+    "electrically_verified": false
+  }
+}

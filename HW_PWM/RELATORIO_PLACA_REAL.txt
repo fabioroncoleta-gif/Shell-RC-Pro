@@ -1,0 +1,40 @@
+SHELL 488 CHALLENGE EVO — INSPECAO DA PLACA (30/10/2026)
+
+CONFIRMADO NAS FOTOS:
+- PCB controladora verde com inscricao 36732-BT e revisao V2.3.
+- Uma celula recarregavel protegida por invólucro colorido; etiqueta eletrica nao legivel.
+- Motor/redutor de tracao, mecanismo de direcao e placa separada de LEDs.
+- A imagem mostra LED vermelho aceso: DESLIGAR carrinho e desconectar carregador antes de manusear.
+
+REFERENCIA EXTERNA, NAO MEDICAO DESTE EXEMPLAR:
+- Manual da familia 18-36732..36735 lista bateria 3.2V/100mAh.
+- A 488 Challenge Evo e listada como 36733; PCB 36732-BT pode ser compartilhada.
+
+NAO IDENTIFICADOS:
+- Chip ou transistores do driver de tracao, suas trilhas/pinos.
+- Tensão exata da célula, polaridade na saída do motor, corrente maxima / partida.
+- Se a placa original admite PWM em um pino ou exige substituir o controlador.
+
+IMPLANTACAO REAL: BLOQUEADA ATE INSPECAO E DIMENSIONAMENTO.
+Jamais ligar ponte H nova em paralelo com original. Nao soldar, alimentar
+ou testar freio eletrico enquanto driver e bateria nao forem verificados.
+
+PROXIMA IMAGEM DE MAIOR VALOR: VERSO DA PCB 36732-BT, com todos os
+componentes e codigos legiveis; fotografar com o carrinho DESLIGADO.
+Nao remover bateria, nao cortar fios, nao abrir invólucro da célula.
+
+NOVO MACRO 30/10/2026:
+- CI preto ao lado de um cristal metalico, tipico de MCU de radio/BLE.
+- Candidato YC1063 encontrado em desmontagem de OUTRA placa Bburago; foto atual desfocada, numero NAO CONFIRMADO.
+- Ainda nao evidencia dos chips de potencia U2/U6 nem pinagem/corrente da placa 36732-BT V2.3.
+- Firmware e PWM real continuam NAO habilitados.
+
+FOTOS NITIDAS - U2, U5, U6, YC1323
+- MCU principal CONFIRMADO pela marcacao: YC1323 (antes considerado YC1063, corrigido).
+- U2 e U6: CIs aparentemente iguais, marcados 2008D / BH-053.
+- U5: 3137 / C0AP (a confirmar).
+- Existem dois provaveis drivers, mas sem datasheet confiavel e sem continuidade medida nao se conhece qual serve tracao e qual serve direcao.
+- Familia YC13XX suporta recursos digitais; PWM no firmware particular NAO foi demonstrado.
+- Nao conectar diretamente GPIO/potencia no chip 2008D sem datasheet e mapa de trilhas.
+- Nao ha garantia de que DRV8833 seja substituto pino-a-pino.
+- Perfis PWM continuam OFFLINE; freio real permanece somente corte de tracao.

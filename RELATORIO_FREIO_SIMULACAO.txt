@@ -1,0 +1,17 @@
+SIMULACAO ISOLADA - ALTERNANCIA FRENTE/RE - NAO TRANSMITIDA
+O protocolo so aceita frente/re/zero (1 bit por sentido).
+Nao conhecemos corrente, velocidade real nem capacidade da ponte H.
+Intervalo atual de envio BLE: 50 ms (nominal).
+Periodo de reversao | Inversoes teoricas/s | Ciclos BLE por reversao
+               1 ms |                  999 |     0.02
+               5 ms |                  199 |     0.10
+              10 ms |                   99 |     0.20
+              20 ms |                   49 |     0.40
+              50 ms |                   19 |     1.00
+             100 ms |                    9 |     2.00
+
+INFERENCIA: reversao a cada 1/5/10 ms seria mais rapida que o ciclo BLE.
+Mesmo se possivel, comandar sentido oposto durante o giro pode elevar corrente
+e esforco mecanico, sem garantia de freio ou bloqueio das rodas.
+RESULTADO: INVALIDO COMO FREIO SEGURO. SOMENTE SIMULACAO.
+LB REAL: corta frente/re e preserva bit de direcao; sem comando de sentido oposto.
