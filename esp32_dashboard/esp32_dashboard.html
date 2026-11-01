@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shell RC Pro | Central ESP32</title>
+<style>
+:root {
+  color-scheme:dark;--bg:#0a0f1c;--panel:#141d30;--soft:#1c2840;--edge:#293950;
+  --text:#f4f7ff;--muted:#93a6c3;--good:#3ee6ad;--warn:#f9c75c;--bad:#fa7282;
+  --accent:#54b4ff;--blue:#5a9aff;
+}
+*{box-sizing:border-box}html,body{height:100%}body{
+ margin:0;background:radial-gradient(900px 480px at 4% -10%,#17365a 0%,transparent 68%),var(--bg);
+ color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+body:before {content:"";position:fixed;left:0;right:0;top:0;height:3px;
+ background:linear-gradient(90deg,#2784eb,#5aeac1,#b794fa);z-index:30}
+.wrap{max-width:1500px;margin:0 auto;padding:20px 24px 34px}
+header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:19px}
+header .brand{display:flex;gap:16px;align-items:center}
+.badge-logo{border-radius:15px;width:51px;height:51px;display:grid;place-items:center;
+ background:linear-gradient(135deg,#2b8cf5,#2d4b92);box-shadow:0 8px 30px #103b793a}
+.brandtext h1{font-size:24px;line-height:1.08;margin:0;letter-spacing:-.6px}
+.brandtext p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.header-right{display:flex;align-items:center;gap:13px}
+.clock{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);min-width:65px}
+.pill{border:1px solid var(--edge);background:#111d30;border-radius:999px;font-size:12px;
+ padding:7px 12px;display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:#71849f;flex:0 0 auto}
+.dot.good{background:var(--good);box-shadow:0 0 15px #3ee6ad77}
+.dot.warn{background:var(--warn);box-shadow:0 0 12px #f9c75c55}
+.dot.bad{background:var(--bad);box-shadow:0 0 12px #fa728255}
+.cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-bottom:16px}
+.card{background:linear-gradient(156deg,#18253a,#121a2a);border:1px solid var(--edge);
+ border-radius:18px;min-width:0;box-shadow:0 14px 42px #03091633}
+.status-card{padding:19px 21px 18px;position:relative;overflow:hidden;min-height:184px}
+.status-card:before{content:"";position:absolute;width:100px;height:100px;border-radius:50%;top:-51px;right:-41px;
+ background:#7ac4ff12;filter:blur(3px)}
+.label{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
+.big-row{margin-top:12px;display:flex;align-items:center;gap:10px}
+.status-led{height:12px;width:12px;min-width:12px;border-radius:50%;background:#7b8795}
+.status-led.good{background:var(--good);box-shadow:0 0 16px #3ee6ad80}
+.status-led.warn{background:var(--warn);box-shadow:0 0 16px #f9c75c80}
+.status-led.bad{background:var(--bad);box-shadow:0 0 16px #fa728270}
+.status-text{font-weight:800;font-size:25px;letter-spacing:-.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.desc{color:var(--muted);font-size:12px;margin:9px 0 13px;min-height:18px}
+.metrics{display:flex;gap:6px;flex-wrap:wrap}
+.mini{background:#0e1828;border:1px solid #293950;border-radius:7px;padding:5px 8px;
+ color:#d1dff0;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.main{display:grid;grid-template-columns:minmax(340px,1.05fr) minmax(375px,.95fr);gap:15px}
+.controls{padding:22px}
+.section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.section-heading h2{font-size:19px;margin:0;letter-spacing:-.4px}
+.sub{color:var(--muted);font-size:12px}
+.analog {display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.gauge{border-radius:13px;border:1px solid var(--edge);background:#0d1625;padding:15px}
+.gauge-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.gauge-top span:first-child{color:#c8d8ed;font-weight:700;font-size:12px}
+.gauge-value{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.bar{height:13px;background:#28344c;border-radius:9px;position:relative;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,#3988f4,#52c4ff);width:0;transition:width .12s ease;border-radius:9px}
+.bar-fill.lt{background:linear-gradient(90deg,#846cfb,#ad94fc)}
+.steer-wrap{display:flex;gap:12px;align-items:center;margin-top:18px;padding:15px 14px;
+ border:1px solid var(--edge);background:#0d1625;border-radius:13px}
+.steer-wrap .info{min-width:110px;font-size:12px;color:var(--muted)}
+.steer-track{height:16px;background:#28344c;position:relative;flex:1;border-radius:99px}
+.steer-track:before{content:"";height:22px;width:2px;background:#aec9e3;
+ position:absolute;left:50%;top:-3px;opacity:.8}
+.steer-marker{position:absolute;width:18px;height:26px;top:-5px;left:50%;transform:translateX(-50%);
+ background:var(--good);border-radius:5px;box-shadow:0 0 13px #3ee6ad60;transition:left .10s ease}
+.steer-label{width:65px;text-align:right;font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.buttons-title{margin:21px 0 10px;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.btn-indicator{height:54px;display:flex;flex-direction:column;justify-content:center;align-items:center;
+ border-radius:12px;border:1px solid #354259;background:#202c40;color:#90a0bc;font-size:14px;
+ font-weight:900;transition:background .11s,color .11s,transform .11s,box-shadow .11s}
+.btn-indicator.active{background:#254d78;color:#fff;border-color:#62bafd;
+ box-shadow:inset 0 0 0 1px #62bafd44,0 0 20px #3988f433;transform:scale(1.035)}
+.btn-indicator b{font-weight:900}
+.btn-indicator small{font-weight:600;font-size:10px;opacity:.72}
+.btn-indicator.a.active{background:#194f3d;border-color:#4ee3a7}
+.btn-indicator.b.active{background:#6c2938;border-color:#fa7282}
+.btn-indicator.x.active{background:#244d7a;border-color:#6ac0ff}
+.btn-indicator.y.active{background:#645229;border-color:#f4ca61}
+.status-strip{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#101a2a;border:1px solid var(--edge);border-radius:10px;padding:9px 12px}
+.stat strong{display:block;margin-top:2px;font-size:16px;font-variant-numeric:tabular-nums}
+.stat span{font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.6px;color:var(--muted)}
+.log-card{padding:0;display:flex;flex-direction:column;min-height:560px;max-height:680px;overflow:hidden}
+.log-top{padding:20px 20px 12px;display:flex;align-items:center;justify-content:space-between;
+ gap:10px;border-bottom:1px solid var(--edge)}
+.log-top h2{font-size:19px;margin:0}
+.log-actions{display:flex;gap:6px;align-items:center}
+.action{border:1px solid #37475f;border-radius:8px;background:#202c41;
+ color:#dfe7f8;font:inherit;font-size:12px;padding:6px 10px;cursor:pointer}
+.action.on{color:var(--good);border-color:#3c9977}
+.action:hover{background:#334966}
+.log-hint{font-size:11px;color:var(--muted);padding:9px 20px;border-bottom:1px solid #223148}
+.log-list{flex:1;overflow:auto;padding:6px 11px 15px;font:12px/1.55 ui-monospace,Consolas,monospace}
+.line{display:grid;grid-template-columns:60px 61px 1fr;gap:5px;
+ border-bottom:1px solid #2331497a;padding:6px 8px;color:#b5c6df;overflow-wrap:anywhere}
+.line:hover{background:#1a2a40}
+.time{color:#7189aa}.category{font-size:10px;font-weight:800;letter-spacing:.2px;color:#9baec9}
+.line.success .category,.line.success .message{color:var(--good)}
+.line.error .category,.line.error .message{color:var(--bad)}
+.line.warning .category{color:var(--warn)}
+.line.system .category{color:#72b9f8}
+.line .message{color:#c4d6ea}
+.line.error .message{color:var(--bad)}
+.line.success .message{color:var(--good)}
+.footer{color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:12px;
+ margin-top:13px;flex-wrap:wrap}
+.footer b{color:#b8d5f0}
+.note-banner{border:1px solid #4c4926;border-radius:10px;padding:9px 14px;
+ background:#36311970;color:#f2dda1;margin-bottom:15px;font-size:12px}
+.hide{display:none}
+@media(max-width:1050px){.cards{grid-template-columns:1fr 1fr}.status-card:last-child{grid-column:span 2}
+ .main{grid-template-columns:1fr}.log-card{min-height:440px;max-height:500px}}
+@media(max-width:640px){.wrap{padding:12px}.cards{grid-template-columns:1fr}.status-card:last-child{grid-column:auto}
+ header{align-items:flex-start}.clock{display:none}.status-text{font-size:22px}
+ .analog{gap:8px}.controls{padding:15px}.line{grid-template-columns:47px 50px 1fr;font-size:11px}
+ .status-strip{grid-template-columns:1fr 1fr}.pill{padding:6px 9px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">
+    <div class="badge-logo" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 21.5L8.5 13.5H23.5L27 21.5" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="3.5" y="19.5" width="25" height="7" rx="2.5" stroke="white" stroke-width="2"/>
+        <circle cx="9.5" cy="26" r="2" fill="#40f5b0"/><circle cx="22.5" cy="26" r="2" fill="#40f5b0"/>
+        <path d="M12 9H20M16 6V12" stroke="#72c9ff" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="brandtext">
+      <h1>Shell RC Pro <span style="color:#5ab9ff">| Central ESP32</span></h1>
+      <p>Monitor de controle Xbox + Ferrari Shell · atualização automática</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="clock" id="clock">--:--:--</span>
+    <span class="pill"><span class="dot warn" id="transportDot"></span><span id="transport">Conectando à USB...</span></span>
+  </div>
+</header>
+<div class="note-banner" id="banner">
+  Painel somente leitura. Não envia comandos para o carrinho. O ESP32 funciona independentemente do navegador.
+</div>
+<div class="cards">
+ <section class="card status-card">
+  <div class="label">01 · Controle sem fio</div>
+  <div class="big-row"><span class="status-led bad" id="xDot"></span><span class="status-text" id="xStatus">Aguardando Xbox</span></div>
+  <div class="desc" id="xDetail">Procurando Xbox Wireless via Bluepad32</div>
+  <div class="metrics">
+    <span class="mini" id="xSource">FONTE: NONE</span>
+    <span class="mini" id="xAds">ANÚNCIOS: 0</span>
+    <span class="mini" id="xFresh">SINAL: --</span>
+    <span class="mini" id="xHci">RÁDIO: --</span>
+    <span class="mini" id="xRecoveries">RECUPERAÇÕES: 0</span>
+  </div>
+ </section>
+ <section class="card status-card">
+  <div class="label">02 · Ferrari Shell Bluetooth</div>
+  <div class="big-row"><span class="status-led warn" id="carDot"></span><span class="status-text" id="carStatus">Aguardando conexão</span></div>
+  <div class="desc" id="carDetail">SL-488 Challenge Evo · BLE FFF1</div>
+  <div class="metrics">
+    <span class="mini" id="carAttempts">BUSCAS: 0</span>
+    <span class="mini" id="carConnections">CONEXÕES: 0</span>
+    <span class="mini" id="carWrites">ENVIOS: 0</span>
+    <span class="mini" id="carErr">ERRO: 0</span>
+  </div>
+ </section>
+ <section class="card status-card">
+  <div class="label">03 · Sistema de condução</div>
+  <div class="big-row"><span class="status-led warn" id="armDot"></span><span class="status-text" id="armStatus">Desarmado</span></div>
+  <div class="desc" id="armDetail">START para armar, somente com conexões válidas</div>
+  <div class="metrics">
+    <span class="mini" id="driveMode">MODO: DIRECT</span>
+    <span class="mini" id="usbHost">USB HOST: 0</span>
+    <span class="mini" id="scanResets">BUSCA RECUPERADA: 0</span>
+  </div>
+ </section>
+</div>
+<div class="main">
+ <section class="card controls">
+  <div class="section-heading"><h2>Entrada do controle</h2><span class="sub" id="inputRate">Aguardando dados INPUT2</span></div>
+  <div class="analog">
+   <div class="gauge">
+    <div class="gauge-top"><span>RT · ACELERADOR</span><span id="rtPercent" class="gauge-value">0%</span></div>
+    <div class="bar"><div class="bar-fill" id="rtBar"></div></div>
+   </div>
+   <div class="gauge">
+    <div class="gauge-top"><span>LT · RÉ</span><span id="ltPercent" class="gauge-value">0%</span></div>
+    <div class="bar"><div class="bar-fill lt" id="ltBar"></div></div>
+   </div>
+  </div>
+  <div class="steer-wrap">
+    <div class="info"><strong style="display:block;color:#d7e8f9;font-size:12px">ANALÓGICO ESQUERDO</strong>Direção lateral</div>
+    <div class="steer-track"><div class="steer-marker" id="steerMarker"></div></div>
+    <div class="steer-label" id="steerValue">0%</div>
+  </div>
+  <div class="buttons-title">Botões · ficam iluminados quando pressionados</div>
+  <div class="buttons" id="buttons">
+    <div class="btn-indicator a" data-bit="0"><b>A</b><small>FARÓIS</small></div>
+    <div class="btn-indicator b" data-bit="1"><b>B</b><small>TURBO</small></div>
+    <div class="btn-indicator x" data-bit="2"><b>X</b><small>FADE</small></div>
+    <div class="btn-indicator y" data-bit="3"><b>Y</b><small>STROBO</small></div>
+    <div class="btn-indicator" data-bit="4"><b>LB</b><small>FREIO</small></div>
+    <div class="btn-indicator" data-bit="5"><b>RB</b><small>MODO</small></div>
+    <div class="btn-indicator" data-bit="6"><b>BACK</b><small>RECONECTAR</small></div>
+    <div class="btn-indicator" data-bit="7"><b>START</b><small>ARMAR</small></div>
+  </div>
+  <div class="status-strip">
+    <div class="stat"><span>Última entrada</span><strong id="lastInput">—</strong></div>
+    <div class="stat"><span>Bluetooth Xbox</span><strong id="btAds">0 anúncios</strong></div>
+    <div class="stat"><span>Último pacote serial</span><strong id="lastSerial">—</strong></div>
+  </div>
+ </section>
+ <section class="card log-card">
+  <div class="log-top">
+    <h2>Log em tempo real</h2>
+    <div class="log-actions">
+      <button class="action on" id="autoScroll" type="button">↓ Auto</button>
+      <button class="action" id="clearLog" type="button">Limpar tela</button>
+    </div>
+  </div>
+  <div class="log-hint" id="logHint">Conexões, recuperações BLE, segurança e eventos do firmware.</div>
+  <div class="log-list" id="logList" role="log" aria-label="Eventos da placa ESP32">
+    <div class="line system"><span class="time">--:--:--</span><span class="category">SISTEMA</span><span class="message">Iniciando monitor local...</span></div>
+  </div>
+ </section>
+</div>
+<div class="footer">
+ <span>COMUNICAÇÃO: <b>ESP32 CP2102 · 115200 baud</b> &nbsp;|&nbsp; <b>Somente leitura</b> · sem comandos ao veículo</span>
+ <span id="footerVersion">Firmware: aguardando identificação</span>
+</div>
+</div>
+<script>
+"use strict";
+const el=id=>document.getElementById(id);
+let lastId=0,autoScroll=true,hadResponse=false;
+const categories={success:"CONECTOU",error:"ERRO",warning:"ATENÇÃO",system:"SISTEMA",info:"EVENTO"};
+function setText(id,value){const n=el(id);if(n)n.textContent=String(value);}
+function light(id,level){el(id).className="status-led "+level;}
+function fmtAge(n){return n<0?"—":n<1?"agora":n<60?n.toFixed(1)+" s":Math.floor(n/60)+" min";}
+function setStatus(s){
+ const online=s.transport==="SERIAL_USB"||s.transport==="LOG_COMPARTILHADO";
+ const shared=s.transport==="LOG_COMPARTILHADO";
+ const tdot=el("transportDot");tdot.className="dot "+(online?(shared?"warn":"good"):"bad");
+ setText("transport",s.transport==="SERIAL_USB"?"USB conectada":shared?"Via log compartilhado":s.transport==="SEM_PERMISSAO"?"USB sem permissão":"USB indisponível");
+ setText("clock",new Date().toLocaleTimeString("pt-BR"));
+ const connected=online&&!!s.xbox_connected;
+ light("xDot",connected?"good":"bad");
+ setText("xStatus",connected?"Xbox conectado":"Aguardando Xbox");
+ setText("xDetail",connected?(s.xbox_name||s.source)+" · recebendo dados":
+   "Procurando Xbox Wireless · ligue e aguarde reconexão");
+ setText("xSource","FONTE: "+(connected?s.source:"NONE"));
+ setText("xAds","ANÚNCIOS: "+s.xbox_ads);
+ setText("xFresh",connected?"DADOS: VÁLIDOS":"DADOS: AUSENTES");
+ setText("xHci",s.xbox_hci?"BLE: CONECTADO":"BLE: AGUARDANDO");
+ setText("xRecoveries","RECUPERAÇÕES: "+s.xbox_link_recoveries);
+ const car=s.car_state;
+ const carReady=online&&car==="READY";
+ const carMap={READY:"Ferrari conectada",SCANNING:"Procurando Ferrari",CONNECTING:"Conectando...",DISCOVERING:"Lendo serviços BLE",FAILED:"Falha no Bluetooth",IDLE:connected?"Aguardando Ferrari":"Aguardando Xbox",UNKNOWN:"Sem telemetria"};
+ light("carDot",carReady?"good":car==="FAILED"?"bad":"warn");
+ setText("carStatus",carMap[car]||car);
+ setText("carDetail","SL-488 Challenge Evo · 13:05:AA:04:66:96");
+ setText("carAttempts","BUSCAS: "+s.car_scans);
+ setText("carConnections","CONEXÕES: "+s.car_connections);
+ setText("carWrites","ENVIOS: "+s.car_tx);
+ setText("carErr","ERRO: "+s.car_err);
+ const armed=connected&&carReady&&s.xbox_armed&&s.car_armed;
+ light("armDot",armed?"good":"warn");
+ setText("armStatus",armed?"Armado":"Desarmado");
+ setText("armDetail",armed?"Comandos liberados pelo firmware":"Proteção ativa · START arma após neutro");
+ setText("driveMode","MODO: "+s.car_drive_mode);
+ setText("usbHost","USB HOST: "+s.host);
+ setText("scanResets","BUSCA RECUPERADA: "+s.scan_restarts);
+ const canDisplay=connected && s.input_age>=0 && s.input_age<=0.8;
+ const r=canDisplay?Math.round(s.rt/1023*100):0,
+       l=canDisplay?Math.round(s.lt/1023*100):0,
+       x=canDisplay?Math.round(s.steer/512*100):0,
+       mask=canDisplay?s.buttons:0;
+ setText("rtPercent",r+"%");setText("ltPercent",l+"%");
+ el("rtBar").style.width=r+"%";el("ltBar").style.width=l+"%";
+ el("steerMarker").style.left=(50+x*.48)+"%";
+ setText("steerValue",(x>0?"+":"")+x+"%");
+ document.querySelectorAll(".btn-indicator").forEach(btn=>{
+    btn.classList.toggle("active",!!(mask&(1<<Number(btn.dataset.bit))));
+ });
+ setText("lastInput",canDisplay?fmtAge(s.input_age):"sem dados");
+ setText("btAds",s.xbox_ads+" anúncios");
+ setText("lastSerial",fmtAge(s.last_frame_age));
+ setText("inputRate",canDisplay?"CONTROLE AO VIVO":"AGUARDANDO INPUT2");
+ setText("footerVersion",s.firmware?s.firmware.replace("BOOT,SHELL_RC_PRO_STANDALONE,",""):
+    "Firmware: v0.7 · aguardando BOOT");
+ const banner=el("banner");
+ if(s.transport==="SEM_PERMISSAO"){banner.textContent="ACESSO USB NEGADO: abra o atalho 'Shell RC Pro - Corrigir USB ESP32' e autorize no Ubuntu. O painel reconecta automaticamente depois.";}
+ else if(shared){banner.textContent="O monitor antigo está usando a USB. O painel lê o log compartilhado e assume a porta automaticamente quando ela for liberada.";}
+ else if(!online){banner.textContent="Aguardando acesso USB ao ESP32. Confirme o cabo e feche aplicativos que utilizam a porta serial.";}
+ else{banner.textContent="ESP32 controla a Ferrari diretamente. Este painel é somente leitura e pode ser fechado sem interromper o carrinho.";}
+}
+function addEvent(ev){
+ const list=el("logList"); const nearBottom=list.scrollTop+list.clientHeight>=list.scrollHeight-48;
+ const row=document.createElement("div");row.className="line "+(ev.category||"info");
+ const t=document.createElement("span");t.className="time";t.textContent=ev.at;
+ const c=document.createElement("span");c.className="category";c.textContent=categories[ev.category]||"EVENTO";
+ const m=document.createElement("span");m.className="message";m.textContent=ev.text;
+ row.append(t,c,m);list.append(row);
+ while(list.children.length>350)list.firstElementChild.remove();
+ if(autoScroll && nearBottom)list.scrollTop=list.scrollHeight;
+}
+async function update(){
+ try{
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),2200);
+  const response=await fetch("/api/state?after="+lastId,{signal:ctrl.signal,cache:"no-store"});
+  clearTimeout(timer);
+  if(!response.ok)throw Error("HTTP "+response.status);
+  const data=await response.json();
+  if(data.last_id>lastId)lastId=data.last_id;
+  setStatus(data.state);
+  if(!hadResponse){el("logList").replaceChildren();hadResponse=true;}
+  for(const item of data.events||[])addEvent(item);
+  setText("logHint","Conexões, recuperações BLE e segurança · "+new Date().toLocaleTimeString("pt-BR"));
+ }catch(err){
+  el("transportDot").className="dot bad";
+  setText("transport","Painel desconectado");
+  setText("logHint","Sem resposta do servidor local: "+err.message);
+ }
+}
+el("autoScroll").addEventListener("click",()=>{
+ autoScroll=!autoScroll;el("autoScroll").classList.toggle("on",autoScroll);
+ setText("autoScroll",autoScroll?"↓ Auto":"↓ Pausado");
+ if(autoScroll)el("logList").scrollTop=el("logList").scrollHeight;
+});
+el("clearLog").addEventListener("click",()=>el("logList").replaceChildren());
+update();setInterval(update,250);
+</script>
+</body>
+</html>

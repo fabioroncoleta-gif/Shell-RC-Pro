@@ -1,5 +1,20 @@
 # Shell RC Pro — Ferrari Shell + controle Xbox 360
 
+## ESP32 independente — versão validada v1.2.2 (01/11/2026)
+
+Agora o Xbox Bluetooth e a Ferrari Shell podem ser controlados diretamente pela
+ESP32, alimentada por USB, sem notebook no caminho dos comandos.
+Fábio validou o funcionamento e os comandos mantidos.
+
+- [Código e instruções de operação](esp32_ferrari_standalone/README.md).
+- [Firmware validado e SHA256](firmware/validated/v1.2.2/).
+- [Painel local de diagnóstico](esp32_dashboard/).
+
+O ciclo físico com fonte externa ainda deve ser confirmado. Para usar, ligue os
+dispositivos, mova o analógico para enviar o primeiro comando e arme com START
+em neutro. O aplicativo Python abaixo continua disponível como versão para PC.
+
+
 Aplicativo experimental em Python para controlar miniaturas **Shell Racing Legends** Bluetooth Low Energy (BLE) pelo controle Xbox 360 conectado ao Linux. Desenvolvido e testado no Ubuntu 24.04.
 
 > **Estado:** versao de referencia de 31/10/2026. Os 60 testes automatizados foram aprovados localmente. A integracao fisica, especialmente com diferentes modelos de Ferrari e recuperacao de falhas BLE, exige testes de bancada.

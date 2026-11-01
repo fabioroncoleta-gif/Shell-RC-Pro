@@ -1,0 +1,14 @@
+{
+  "version": "1.2.2_SUPERVISED_HELD_INPUT",
+  "validated_by_owner": true,
+  "validated_date": "2026-11-01",
+  "chip": "ESP32-D0WD-V3",
+  "flash_size": "4MB",
+  "app_offset": "0x10000",
+  "bytes": 760016,
+  "sha256": "82038eda1c41047afb6fde948b6b58262558c0aa3e86f3d74c5d932252092634",
+  "board_fqbn": "esp32-bluepad32:esp32:esp32",
+  "bluepad32_core": "4.1.0",
+  "usb_host_shield_library": "1.7.0",
+  "physical_external_power_cycle_tested": false
+}
