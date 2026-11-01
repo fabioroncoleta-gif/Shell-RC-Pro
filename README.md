@@ -1,5 +1,9 @@
 # Shell RC Pro — Ferrari Shell + controle Xbox 360
 
+**Versão atual validada por Fábio: ESP32 Multicar v1.3.0.** Manter esta versão instalada.
+[Backup validado e checksum](firmware/validated/v1.3.0/) · [Versão fixada](firmware/CURRENT_VALIDATED.json).
+
+
 ## ESP32 Multicar — v1.3.0 (01/11/2026)
 
 Descoberta de carrinhos Shell BLE e troca pelo painel do PC ou pelo direcional
