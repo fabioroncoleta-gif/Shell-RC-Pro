@@ -3,7 +3,7 @@
 
 Backend sem frameworks: HTTP em 127.0.0.1, leitura serial com reconexão,
 interpretação de telemetria e histórico limitado de eventos.
-NENHUMA escrita serial nem comando aos motores ou à placa.
+Comandos locais limitados a descoberta e seleção de carrinho, sempre desarmando.
 """
 from __future__ import annotations
 
@@ -44,6 +44,7 @@ def default_state():
         host=0, baud=115200, serial_path=PORT,
         start_time=time.time(), last_frame=0, last_line="",
         firmware="", note="", connected_count=0, last_disconnect="",
+        fleet=[], selected_car=0, car_name="", car_address="",
     )
 
 
@@ -69,6 +70,7 @@ class Monitor:
         self.state = default_state()
         self.events = deque(maxlen=1600)
         self.serial_no = 0
+        self.pending_commands = deque(maxlen=16)
         self.last_log_emit = {}
         self._stop = threading.Event()
 
@@ -105,6 +107,21 @@ class Monitor:
             if line.startswith("BOOT,"):
                 s["firmware"] = line
                 self.add(line, "system")
+            elif line.startswith("FLEET_BEGIN,"):
+                s["fleet"] = []
+            elif line.startswith("FLEET,"):
+                kv = extract_kv(line)
+                index = int0(kv.get("INDEX"))
+                if 1 <= index <= 8:
+                    s["fleet"] = [c for c in s["fleet"] if c["index"] != index]
+                    s["fleet"].append(dict(index=index,name=kv.get("NAME","Shell BLE"),address=kv.get("ADDR",""),seen=bool(int0(kv.get("SEEN"))),rejected=bool(int0(kv.get("REJECTED"))),rssi=int0(kv.get("RSSI"))))
+            elif line.startswith("FLEET_SELECTED,"):
+                kv=extract_kv(line)
+                s.update(selected_car=int0(kv.get("INDEX")),car_name=kv.get("NAME",""),car_address=kv.get("ADDR",""))
+                self.add("Selecionado: "+s["car_name"],"success")
+            elif line.startswith(("FLEET_SWITCH,","FLEET_WAIT,","FLEET_REJECTED,")):
+                s["car_armed"] = s["xbox_armed"] = False
+                self.add(line,"warning")
             elif line.startswith("CONNECTED,"):
                 if line.startswith("CONNECTED,XBOX_BT,"):
                     s["xbox_name"] = line.split(",")[2] if line.count(",") >= 2 else ""
@@ -140,7 +157,7 @@ class Monitor:
                 if len(f) == 6 and f[1] in ("XBOX_BT", "XBOX360_USB"):
                     try:
                         steer, rt, lt, buttons = (int(v) for v in f[2:])
-                        if -512 <= steer <= 512 and 0 <= rt <= 1023 and 0 <= lt <= 1023 and 0 <= buttons <= 255:
+                        if -512 <= steer <= 512 and 0 <= rt <= 1023 and 0 <= lt <= 1023 and 0 <= buttons <= 1023:
                             s.update(steer=steer, rt=rt, lt=lt, buttons=buttons,
                                      input_last_seen=now, source=f[1])
                     except ValueError:
@@ -211,6 +228,18 @@ class Monitor:
                 self.state["note"] = note
                 cat = "success" if name == "SERIAL_USB" else "warning"
                 self.add("Monitor: " + name + ((" • " + note) if note else ""), cat)
+
+    def queue_command(self, command):
+        allowed = {"SCAN","CARS","NEXT","PREV"} | {f"CAR {i}" for i in range(1,9)}
+        if command not in allowed:
+            return False, "Comando não permitido"
+        with self.lock:
+            if self.state["transport"] != "SERIAL_USB":
+                return False, "Seleção exige USB exclusiva conectada"
+            if len(self.pending_commands)>=16:
+                return False, "Aguarde os comandos anteriores"
+            self.pending_commands.append(command)
+            return True, "Comando enfileirado"
 
     def snapshot(self, after):
         with self.lock:
@@ -283,6 +312,11 @@ class Monitor:
                     time.sleep(0.35)
             if ser is not None:
                 try:
+                    with self.lock:
+                        command = self.pending_commands.popleft() if self.pending_commands else None
+                    if command:
+                        ser.write((command+"\n").encode("ascii"))
+                        self.add("PC → ESP32: "+command,"info")
                     text = ser.readline().decode("utf-8","replace").strip()
                     if text:
                         self.consume(text)
@@ -292,6 +326,8 @@ class Monitor:
                     except Exception:
                         pass
                     ser = None
+                    with self.lock:
+                        self.pending_commands.clear()
                     self.set_transport("RECONECTANDO","USB indisponível: " + str(exc)[:80])
                     time.sleep(.4)
 
@@ -315,6 +351,26 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(data)
         except (BrokenPipeError, ConnectionResetError):
             pass
+
+    def do_POST(self):
+        if self.path != "/api/fleet":
+            return self.send_error(404)
+        if self.headers.get("Origin") not in ("http://127.0.0.1:8765", "http://localhost:8765"):
+            return self.send_error(403)
+        if self.headers.get("Content-Type","").split(";")[0] != "application/json":
+            return self.send_error(415)
+        try:
+            length = int(self.headers.get("Content-Length","0"))
+            if not 0 < length <= 128:
+                return self.send_error(400)
+            payload = json.loads(self.rfile.read(length))
+            command = payload.get("command")
+            if not isinstance(command,str):
+                return self.send_error(400)
+            ok, message = MONITOR.queue_command(command)
+        except (ValueError,TypeError,AttributeError):
+            return self.send_error(400)
+        self.send_bytes(json.dumps(dict(ok=ok,message=message),ensure_ascii=False).encode(),"application/json")
 
     def do_GET(self):
         parsed = urlsplit(self.path)

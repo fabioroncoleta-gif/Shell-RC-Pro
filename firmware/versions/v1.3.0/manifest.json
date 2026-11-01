@@ -1,0 +1,16 @@
+{
+  "version": "1.3.0_MULTICAR",
+  "date": "2026-11-01",
+  "sha256": "dca54df2a884a541395e9be67fd2077e87a4d507249ce33a18a3ed30ed234a51",
+  "bytes": 764736,
+  "app_offset": "0x10000",
+  "chip": "ESP32-D0WD-V3",
+  "flash": "4MB",
+  "bluepad32": "4.1.0",
+  "usb_host_shield": "1.7.0",
+  "real_gatt_verified_model": "SL-SF-25",
+  "panel_reselection_test": "PASS; disarmed; Xbox preserved",
+  "simultaneous_two_cars_hardware_tested": false,
+  "full_SF25_driving_owner_confirmed": false,
+  "previous_owner_validated_version": "esp32-v1.2.2"
+}

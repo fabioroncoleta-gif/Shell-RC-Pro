@@ -1,5 +1,16 @@
 # Shell RC Pro — Ferrari Shell + controle Xbox 360
 
+## ESP32 Multicar — v1.3.0 (01/11/2026)
+
+Descoberta de carrinhos Shell BLE e troca pelo painel do PC ou pelo direcional
+esquerdo/direito do Xbox, com desarme e novo START obrigatório. A ESP32 já
+detectou e conectou a **SL-SF-25** em READY, com FFF1 gravável e sem erro BLE.
+
+- [Uso, compatibilidade e evidências](esp32_multicar/README.md).
+- [Firmware multicar e checksum](firmware/versions/v1.3.0/).
+- A versão validada v1.2.2 permanece disponível para reversão.
+
+
 ## ESP32 independente — versão validada v1.2.2 (01/11/2026)
 
 Agora o Xbox Bluetooth e a Ferrari Shell podem ser controlados diretamente pela

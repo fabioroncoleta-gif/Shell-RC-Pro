@@ -145,7 +145,7 @@ header .brand{display:flex;gap:16px;align-items:center}
   </div>
 </header>
 <div class="note-banner" id="banner">
-  Painel somente leitura. Não envia comandos para o carrinho. O ESP32 funciona independentemente do navegador.
+  A ESP32 funciona sem navegador. A seleção abaixo desarma o carrinho; START libera a condução novamente.
 </div>
 <div class="cards">
  <section class="card status-card">
@@ -163,7 +163,13 @@ header .brand{display:flex;gap:16px;align-items:center}
  <section class="card status-card">
   <div class="label">02 · Ferrari Shell Bluetooth</div>
   <div class="big-row"><span class="status-led warn" id="carDot"></span><span class="status-text" id="carStatus">Aguardando conexão</span></div>
-  <div class="desc" id="carDetail">SL-488 Challenge Evo · BLE FFF1</div>
+  <div class="desc" id="carDetail">Carrinhos Shell BLE compatíveis</div>
+  <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap">
+   <select id="fleetSelect" aria-label="Escolher carrinho" style="flex:1;min-width:160px;background:#142130;color:#e0efff;padding:9px;border:1px solid #345;border-radius:8px"><option value="">Aguardando descoberta</option></select>
+   <button class="action" id="scanCars" type="button">Buscar</button>
+   <button class="action" id="connectCar" type="button">Conectar</button>
+  </div>
+  <div class="desc" id="fleetHint">Sem PC: direcional esquerdo/direito troca o carrinho.</div>
   <div class="metrics">
     <span class="mini" id="carAttempts">BUSCAS: 0</span>
     <span class="mini" id="carConnections">CONEXÕES: 0</span>
@@ -232,7 +238,7 @@ header .brand{display:flex;gap:16px;align-items:center}
  </section>
 </div>
 <div class="footer">
- <span>COMUNICAÇÃO: <b>ESP32 CP2102 · 115200 baud</b> &nbsp;|&nbsp; <b>Somente leitura</b> · sem comandos ao veículo</span>
+ <span>COMUNICAÇÃO: <b>ESP32 CP2102 · 115200 baud</b> &nbsp;|&nbsp; <b>Seleção de carrinho</b> · condução pelo Xbox</span>
  <span id="footerVersion">Firmware: aguardando identificação</span>
 </div>
 </div>
@@ -240,6 +246,13 @@ header .brand{display:flex;gap:16px;align-items:center}
 "use strict";
 const el=id=>document.getElementById(id);
 let lastId=0,autoScroll=true,hadResponse=false;
+async function fleetCommand(command){
+ try{const response=await fetch('/api/fleet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command})});const result=await response.json();setText('fleetHint',result.ok?'Solicitado. Aguarde a placa; arme novamente com START.':result.message);}
+ catch(e){setText('fleetHint','Falha na solicitação. Confira a USB.');}
+}
+el('scanCars').addEventListener('click',()=>fleetCommand('SCAN'));
+el('connectCar').addEventListener('click',()=>{if(el('fleetSelect').value)fleetCommand('CAR '+el('fleetSelect').value);});
+
 const categories={success:"CONECTOU",error:"ERRO",warning:"ATENÇÃO",system:"SISTEMA",info:"EVENTO"};
 function setText(id,value){const n=el(id);if(n)n.textContent=String(value);}
 function light(id,level){el(id).className="status-led "+level;}
@@ -262,10 +275,20 @@ function setStatus(s){
  setText("xRecoveries","RECUPERAÇÕES: "+s.xbox_link_recoveries);
  const car=s.car_state;
  const carReady=online&&car==="READY";
- const carMap={READY:"Ferrari conectada",SCANNING:"Procurando Ferrari",CONNECTING:"Conectando...",DISCOVERING:"Lendo serviços BLE",FAILED:"Falha no Bluetooth",IDLE:connected?"Aguardando Ferrari":"Aguardando Xbox",UNKNOWN:"Sem telemetria"};
+ const carMap={SELECT_CAR:"Escolha o carrinho",DISCONNECTING:"Trocando carrinho...",READY:"Carrinho conectado",SCANNING:"Procurando Ferrari",CONNECTING:"Conectando...",DISCOVERING:"Lendo serviços BLE",FAILED:"Falha no Bluetooth",IDLE:connected?"Aguardando Ferrari":"Aguardando Xbox",UNKNOWN:"Sem telemetria"};
  light("carDot",carReady?"good":car==="FAILED"?"bad":"warn");
  setText("carStatus",carMap[car]||car);
- setText("carDetail","SL-488 Challenge Evo · 13:05:AA:04:66:96");
+ setText("carDetail",s.car_name?(s.car_name+" · "+s.car_address):"Selecione um carrinho Shell BLE");
+ const fleet=el("fleetSelect");const signature=JSON.stringify(s.fleet||[]);
+ if(fleet.dataset.signature!==signature){
+   const previous=fleet.value;fleet.replaceChildren();
+   for(const car of s.fleet||[]){const option=document.createElement("option");option.value=car.index;option.textContent=car.name+" · "+car.address+(car.rejected?" · incompatível":"");option.disabled=!!car.rejected;fleet.append(option);}
+   if([...fleet.options].some(o=>o.value===previous))fleet.value=previous;
+   else if(s.selected_car)fleet.value=s.selected_car;
+   fleet.dataset.signature=signature;
+ }
+ el("connectCar").disabled=!online||shared||!fleet.value;
+ el("scanCars").disabled=!online||shared;
  setText("carAttempts","BUSCAS: "+s.car_scans);
  setText("carConnections","CONEXÕES: "+s.car_connections);
  setText("carWrites","ENVIOS: "+s.car_tx);
@@ -299,7 +322,7 @@ function setStatus(s){
  if(s.transport==="SEM_PERMISSAO"){banner.textContent="ACESSO USB NEGADO: abra o atalho 'Shell RC Pro - Corrigir USB ESP32' e autorize no Ubuntu. O painel reconecta automaticamente depois.";}
  else if(shared){banner.textContent="O monitor antigo está usando a USB. O painel lê o log compartilhado e assume a porta automaticamente quando ela for liberada.";}
  else if(!online){banner.textContent="Aguardando acesso USB ao ESP32. Confirme o cabo e feche aplicativos que utilizam a porta serial.";}
- else{banner.textContent="ESP32 controla a Ferrari diretamente. Este painel é somente leitura e pode ser fechado sem interromper o carrinho.";}
+ else{banner.textContent="ESP32 controla a Ferrari diretamente. O painel permite buscar e trocar carrinhos e pode ser fechado durante o uso.";}
 }
 function addEvent(ev){
  const list=el("logList"); const nearBottom=list.scrollTop+list.clientHeight>=list.scrollHeight-48;
