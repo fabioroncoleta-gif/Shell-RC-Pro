@@ -1,0 +1,23 @@
+{
+  "version": "1.3.1_FAST_LINKS",
+  "tag": "esp32-v1.3.1-validado",
+  "date": "2026-11-15",
+  "owner_approved": true,
+  "firmware": "firmware_validado_v1.3.1.bin",
+  "sha256": "a2b26c580202a9e06de2ec286ba477b94876305c89b22bdf058949c20958d5f7",
+  "previous_validated": "esp32-v1.3.0-validado",
+  "build": "PASS (Arduino Bluepad32 ESP32, 758557 bytes, 57% flash)",
+  "upload": "PASS /dev/ttyUSB0; hash verified; RTS reset",
+  "tests": {
+    "fleet_selection": "PASS",
+    "router": "PASS",
+    "held_input_safety": "PASS",
+    "drive_and_brake_safety": "PASS",
+    "live_xbox_hid": "PASS",
+    "live_sf90_spider": "PASS",
+    "live_f80": "DETECTED_ONLY, switching not yet validated"
+  },
+  "recovery": "Xbox HID handshake stuck recovery observed, 6 cumulative recoveries prior to stable connection",
+  "confirmed_stability": "Xbox + SF90 link stayed ready >33s during monitored window",
+  "policy": "Preserve this version and 1.3.0; do not change unrelated connectivity."
+}

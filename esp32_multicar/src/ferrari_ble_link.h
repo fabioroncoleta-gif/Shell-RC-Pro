@@ -59,6 +59,7 @@ static btstack_packet_callback_registration_t packetRegistration = {};
 static btstack_context_callback_registration_t requestRegistration = {};
 static Action requestedAction = Action::REGISTER;
 static uint32_t scanStartedAt = 0;
+static uint32_t lastConnectTimeoutMs = 0;
 
 static shellrc::Fleet fleet;
 static Preferences fleetPrefs;
@@ -339,7 +340,36 @@ static void fleetTick() {
         if(handle!=HCI_CON_HANDLE_INVALID)gap_disconnect(handle);
         else {gap_connect_cancel();uni_bt_le_scan_stop();set(State::IDLE);}
     }
-    if(current()==State::SCANNING && uint32_t(millis()-scanStartedAt)>=4000u){
+    // Bound failed / obsolete-generation peers: never hold up the fleet indefinitely.
+    // All HCI work stays on the BTstack/Core0 thread.
+    const State phase=current();
+    const uint32_t age=uint32_t(millis()-lastEventMs.load());
+    if(phase==State::CONNECTING && age>=3500u){
+        lastError.store(0xEE);
+        controlBlocked.store(true); mustDisarm.store(true);
+        const int i=fleet.find(kTarget); if(i>=0)fleet.cars[i].rejected=true;
+        gap_connect_cancel();
+        set(State::FAILED);
+        lastConnectTimeoutMs=millis();
+        Serial.println("FLEET_TIMEOUT,CONNECTING,3500MS");
+        return;
+    }
+    if(phase==State::DISCOVERING && age>=2500u){
+        lastError.store(0xED);
+        controlBlocked.store(true); mustDisarm.store(true);
+        const int i=fleet.find(kTarget); if(i>=0)fleet.cars[i].rejected=true;
+        if(handle!=HCI_CON_HANDLE_INVALID){
+            set(State::DISCONNECTING);
+            gap_disconnect(handle);
+        }else set(State::FAILED);
+        lastConnectTimeoutMs=millis();
+        Serial.println("FLEET_TIMEOUT,DISCOVERING,2500MS");
+        return;
+    }
+    if(phase==State::DISCONNECTING && age>=3000u && handle==HCI_CON_HANDLE_INVALID){
+        set(State::IDLE);
+    }
+    if(current()==State::SCANNING && uint32_t(millis()-scanStartedAt)>=2400u){
         uni_bt_le_scan_stop();printFleet();int chosen=fleet.choose();
         if(chosen<0){set(State::SELECTING);Serial.println("FLEET_WAIT,SELECT_ON_PC_OR_DPAD");return;}
         memcpy(kTarget,fleet.cars[chosen].address,6);
@@ -369,6 +399,9 @@ static void runRequest(void* context) {
             // Bluepad32 owns BLE scan params and active scanner state.
             // Shared scan delivers Ferrari GAP events to our handler.
             fleet.beginScan();
+            // A failed peer is retried only after a fresh scan, not immediately
+            // within the same selection pass.
+            for(int i=0;i<fleet.count;i++)fleet.cars[i].rejected=false;
             uni_bt_le_scan_start();
             scanStartedAt=millis();
             ++scans;
@@ -385,10 +418,10 @@ static void runRequest(void* context) {
         }
         break;
       case Action::RECOVER_XBOX_LINK:
-        if(xboxHciConnected.load() && !xboxGamepadReady.load() && !xboxAwaitingReport.load() &&
+        if(xboxHciConnected.load() && !xboxGamepadReady.load() &&
            xboxHandle!=HCI_CON_HANDLE_INVALID &&
-           uint32_t(millis()-xboxHciSince.load())>10000u &&
-           uint32_t(millis()-lastXboxRecoveryMs.load())>14000u) {
+           uint32_t(millis()-xboxHciSince.load())>8500u &&
+           uint32_t(millis()-lastXboxRecoveryMs.load())>9000u) {
             // Bluepad32 sometimes gets stuck after HCI LE successful connect
             // but before HIDS gamepad ready. Recover ONLY that known Xbox handle.
             lastXboxRecoveryMs.store(millis());

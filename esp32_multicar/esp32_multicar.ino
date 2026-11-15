@@ -267,7 +267,7 @@ void setup() {
   Serial.begin(115200);
   delay(250);
   Serial.println();
-  Serial.println("BOOT,SHELL_RC_PRO_STANDALONE,VERSION=1.3.0_MULTICAR");
+  Serial.println("BOOT,SHELL_RC_PRO_STANDALONE,VERSION=1.3.1_FAST_LINKS");
   Serial.println("CHIP,ESP32_CLASSIC_BT_BLE,FLASH=4MB");
   printHelp();
   // Bluepad32 supports Xbox Wireless over BT Classic and BLE.
@@ -319,28 +319,32 @@ void loop() {
       (ferrarible::xboxHciConnected.load() &&
        (ferrarible::xboxAwaitingReport.load() || ferrarible::xboxGamepadReady.load()));
   if(xboxPresent) lastGamepadLinkMs=now;
-  if(!xboxPresent && !ferrarible::xboxGamepadReady.load() &&
-     !ferrarible::xboxAwaitingReport.load() &&
+  // A bare HCI link is NOT a usable gamepad. Do not start a car scan
+  // while its HID handshake is incomplete; recover the Xbox first.
+  const bool xboxHidReady = (out.fresh &&
+      (out.source==Source::BLUETOOTH || out.source==Source::XBOX360_USB)) ||
+      ferrarible::xboxGamepadReady.load();
+  if(!ferrarible::xboxGamepadReady.load() &&
      ferrarible::xboxHciConnected.load() &&
-     uint32_t(now-ferrarible::xboxHciSince.load())>11500u &&
-     uint32_t(now-ferrarible::lastXboxRecoveryMs.load())>14000u) {
+     uint32_t(now-ferrarible::xboxHciSince.load())>8500u &&
+     uint32_t(now-ferrarible::lastXboxRecoveryMs.load())>9000u) {
       if(ferrarible::request(ferrarible::Action::RECOVER_XBOX_LINK)) {
         Serial.println("XBOX_RECOVERY,HCI_LINK_STUCK_RETRYING_BONDED_CONTROLLER");
       }
   }
   if (!xboxPresent && carState==ferrarible::State::IDLE &&
-      uint32_t(now-lastGamepadRecoveryMs)>17000u &&
+      uint32_t(now-lastGamepadRecoveryMs)>11000u &&
       uint32_t(now-lastGamepadLinkMs)>1500u &&
       // Only recover if BTstack has genuinely stopped receiving BLE adverts.
       // Frequent restarts while BLE scan is active abort Xbox pairing.
-      uint32_t(now-ferrarible::lastAnyAdMs.load())>13000u) {
+      uint32_t(now-ferrarible::lastAnyAdMs.load())>8500u) {
       if(ferrarible::request(ferrarible::Action::RECOVER_XBOX_SCAN)) {
         lastGamepadRecoveryMs=now;
         Serial.println("BT_RECOVERY,BLUEPAD32_SCAN_RESTARTED");
       }
   }
-  if (!xboxPresent) {
-    // No car connection without controller. Disarm before disconnecting.
+  if (!xboxHidReady) {
+    // No car connection without a VALID gamepad report. Disarm before disconnecting.
     if((carState==ferrarible::State::READY ||
         carState==ferrarible::State::CONNECTING ||
         carState==ferrarible::State::DISCOVERING ||
@@ -352,7 +356,7 @@ void loop() {
         lastCarActionMs=now;
       Serial.println("BT_PRIORITY,XBOX_WAITING,CAR_DISCONNECT");
     }
-  } else if (uint32_t(now-lastCarActionMs)>=2000u &&
+  } else if (uint32_t(now-lastCarActionMs)>=800u &&
       (carState==ferrarible::State::IDLE ||
        carState==ferrarible::State::FAILED || carState==ferrarible::State::SELECTING)) {
     // Only after controller reports arrive do we search Ferrari.
@@ -361,7 +365,7 @@ void loop() {
       Serial.println("BT_PRIORITY,XBOX_CONNECTED,SEARCHING_FERRARI");
     }
   } else if (carState==ferrarible::State::SCANNING &&
-             uint32_t(now-lastCarActionMs)>=6000u) {
+             uint32_t(now-lastCarActionMs)>=5000u) {
     // Ferrari off: stop our LE scan to give BT HID another opportunity.
     if(ferrarible::request(ferrarible::Action::DISCONNECT))
       lastCarActionMs=now;

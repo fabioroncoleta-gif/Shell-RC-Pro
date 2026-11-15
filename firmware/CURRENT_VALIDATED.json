@@ -1,10 +1,10 @@
 {
-  "version": "1.3.0_MULTICAR",
-  "tag": "esp32-v1.3.0-validado",
-  "firmware": "validated/v1.3.0/firmware_validado_v1.3.0.bin",
-  "sha256": "dca54df2a884a541395e9be67fd2077e87a4d507249ce33a18a3ed30ed234a51",
+  "version": "1.3.1_FAST_LINKS",
+  "tag": "esp32-v1.3.1-validado",
+  "firmware": "validated/v1.3.1/firmware_validado_v1.3.1.bin",
+  "sha256": "a2b26c580202a9e06de2ec286ba477b94876305c89b22bdf058949c20958d5f7",
   "owner_validated": true,
-  "date": "2026-11-01",
-  "previous_validated": "esp32-v1.2.2",
+  "date": "2026-11-15",
+  "previous_validated": "esp32-v1.3.0-validado",
   "policy": "Preserve running version; changes only on new request."
 }
