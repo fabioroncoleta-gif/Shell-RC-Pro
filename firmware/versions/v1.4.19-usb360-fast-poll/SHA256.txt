@@ -1,0 +1,1 @@
+35ba6179b2bd375ac3bf0a6f849374a807113d91d6a9b8819af65c6feeac3e87  firmware/versions/v1.4.19-usb360-fast-poll/esp32_multicar.ino.bin

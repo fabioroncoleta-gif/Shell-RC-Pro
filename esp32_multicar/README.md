@@ -1,6 +1,6 @@
-# Shell RC Pro — versão estável v1.4.18 (20/11/2026)
+# Shell RC Pro — versão oficial estável v1.4.19 (21/11/2026)
 
-**Versão confirmada pelo proprietário como funcionando com dois controles e dois carros simultaneamente.** Preserva o pareamento dinâmico (primeiro controle → primeiro carro), a conexão independente dos carros Shell/Ferrari e a condução suave sem pulsos.
+**Versão v1.4.19 confirmada pelo proprietário como funcionando com dois controles e dois carros simultaneamente, com a resposta do Xbox 360 melhorada.** Preserva o pareamento dinâmico (primeiro controle → primeiro carro), a conexão independente dos carros Shell/Ferrari e a condução suave sem pulsos.
 
 | Componente | Interface |
 | --- | --- |
@@ -9,7 +9,7 @@
 | Xbox Wireless Bluetooth | Bluepad32 / Bluetooth da própria ESP32 |
 | Ferrari Shell F80 + SF90 XX Stradale | Dois canais BLE/GATT separados, com característica FFF1 gravável |
 
-A v1.4.18 corrige cortes durante aceleração sustentada do Xbox 360: relatórios HID de botões podem ser esparsos e não indicam desconexão. A biblioteca USB faz consultas de status de rádio a cada 1 segundo; o firmware mantém o último estado válido enquanto o receptor responde. Se perder os retornos de status por mais de 2300 ms ou se ocorrer uma desconexão USB/radio, envia comando neutro. O Xbox Bluetooth e os módulos BLE dos carrinhos permanecem sem alterações em relação à v1.4.17.
+A v1.4.18 corrigiu os cortes de aceleração sustentada do Xbox 360 com a supervisão independente de rádio (checagem a cada ~1 segundo, parada segura sem resposta por mais de 2300 ms ou desconexão). A **v1.4.19 oficial** melhora a latência ao consultar apenas o endpoint USB do controle pareado e distribuir a descoberta de controles entre os quatro slots, sem concentrar várias consultas na mesma iteração. O Xbox Bluetooth, a conexão BLE dos carrinhos e a lógica do motor não foram alterados nesta atualização.
 
 **Compilação reprodutível:** Arduino CLI, placa `esp32-bluepad32:esp32:esp32`, biblioteca USB Host Shield 2.0 incluída em `esp32_multicar/vendor`.
 
@@ -18,7 +18,7 @@ arduino-cli compile -b esp32-bluepad32:esp32:esp32 \
   --libraries esp32_multicar/vendor esp32_multicar
 ```
 
-**Pacote estável:** `firmware/versions/v1.4.18-usb360-status-heartbeat/` contém o `.ino.bin`, `SHA256.txt` e cópia das fontes decisivas. Para auditoria, o binário é gravado no offset ESP32 `0x10000` com o esquema de partições compatível; não apagar a flash inteira nem os pareamentos. A compilação, a gravação e o checksum foram verificados. Testes nativos de retenção do comando, parada, desconexão e recepção USB passaram. Testar sempre com rodas suspensas antes do uso.
+**Pacote oficial:** `firmware/versions/v1.4.19-usb360-fast-poll/` contém o `.ino.bin`, `SHA256.txt` e cópias das fontes alteradas. O backup anterior **v1.4.18** permanece na tag Git `v1.4.18`, para retorno. Para auditoria, o binário é gravado no offset ESP32 `0x10000` com o esquema de partições compatível; não apagar a flash inteira nem os pareamentos. A compilação, a gravação e o checksum foram verificados; 10 testes nativos passaram. O proprietário confirmou funcionamento real em 21/11/2026. Testar sempre com rodas suspensas antes do uso.
 
 ---
 

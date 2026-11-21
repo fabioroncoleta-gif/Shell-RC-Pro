@@ -511,7 +511,7 @@ void setup() {
   Serial.begin(115200);
   delay(250);
   Serial.println();
-  Serial.println("BOOT,SHELL_RC_PRO_STANDALONE,VERSION=1.4.18_USB360_STATUS_HEARTBEAT");
+  Serial.println("BOOT,SHELL_RC_PRO_STANDALONE,VERSION=1.4.19_USB360_FAST_POLL");
   Serial.println("CHIP,ESP32_CLASSIC_BT_BLE,FLASH=4MB");
   printHelp();
   // Bluepad32 supports Xbox Wireless over BT Classic and BLE.

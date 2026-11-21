@@ -296,20 +296,29 @@ uint8_t XBOXRECV::Release() {
         pUsb->GetAddressPool().FreeAddress(bAddress);
         bAddress = 0;
         bPollEnable = false;
+        radioStatusScheduler.reset();
         return 0;
 }
 
 uint8_t XBOXRECV::Poll() {
         if(!bPollEnable)
                 return 0;
-        if(!checkStatusTimer || ((int32_t)((uint32_t)millis() - checkStatusTimer) > 1000)) { // Radio heartbeat query each 1s
-                checkStatusTimer = (uint32_t)millis();
+        // Polling each receiver slot and querying all four by USB OUT
+        // congests MAX3421E. Stagger heartbeat queries and prioritize the
+        // single paired controller's interrupt IN endpoint.
+        if(!checkStatusTimer || uint32_t(millis()-checkStatusTimer) >= 50u) {
+                checkStatusTimer = millis();
                 checkStatus();
+        }
+        uint8_t pairedSlot=xbox360_polling::StatusScheduler::none;
+        for(uint8_t n=0;n<4;n++){
+                if(Xbox360Connected[n]&0x80u){pairedSlot=n;break;}
         }
 
         uint8_t inputPipe;
         uint16_t bufferSize;
         for(uint8_t i = 0; i < 4; i++) {
+                if(!xbox360_polling::pollInputEndpoint(i,pairedSlot))continue;
                 if(i == 0)
                         inputPipe = XBOX_INPUT_PIPE_1;
                 else if(i == 1)
@@ -560,25 +569,21 @@ Thanks to BusHound from Perisoft.net for the Windows USB Analysis output
 Found by timstamp.co.uk
  */
 void XBOXRECV::checkStatus() {
-        if(!bPollEnable)
-                return;
-        // Get controller info
-        writeBuf[0] = 0x08;
-        writeBuf[1] = 0x00;
-        writeBuf[2] = 0x0f;
-        writeBuf[3] = 0xc0;
-        for(uint8_t i = 0; i < 4; i++) {
-                XboxCommand(i, writeBuf, 4);
+        if(!bPollEnable)return;
+        uint8_t active=xbox360_polling::StatusScheduler::none;
+        for(uint8_t i=0;i<4;i++){
+                if(Xbox360Connected[i]&0x80u){active=i;break;}
         }
-        // Get battery status
-        writeBuf[0] = 0x00;
-        writeBuf[1] = 0x00;
-        writeBuf[2] = 0x00;
-        writeBuf[3] = 0x40;
-        for(uint8_t i = 0; i < 4; i++) {
-                if(Xbox360Connected[i])
-                        XboxCommand(i, writeBuf, 4);
-        }
+        uint8_t slot=radioStatusScheduler.next(millis(),active);
+        if(slot==xbox360_polling::StatusScheduler::none)return;
+        // One 4-byte status request per scheduled beat instead of 4-8
+        // blocking USB transfers sent together. Retains 1-second radio
+        // liveness independent from event-driven HID input.
+        writeBuf[0]=0x08;
+        writeBuf[1]=0x00;
+        writeBuf[2]=0x0f;
+        writeBuf[3]=0xc0;
+        XboxCommand(slot,writeBuf,4);
 }
 
 void XBOXRECV::setRumbleOn(uint8_t lValue, uint8_t rValue, uint8_t controller) {

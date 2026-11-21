@@ -24,6 +24,8 @@
 #include "xboxEnums.h"
 
 /* Data Xbox 360 taken from descriptors */
+#include "XboxPollingPolicy.h"
+
 #define EP_MAXPKTSIZE       32 // max size for data via USB
 
 /* Names we give to the 9 Xbox360 pipes */
@@ -271,6 +273,7 @@ private:
         bool R2Clicked[4];
 
         uint32_t checkStatusTimer; // Timing for checkStatus() signals
+        xbox360_polling::StatusScheduler radioStatusScheduler;
 
         uint8_t readBuf[EP_MAXPKTSIZE]; // General purpose buffer for input data
         uint8_t writeBuf[7]; // General purpose buffer for output data
