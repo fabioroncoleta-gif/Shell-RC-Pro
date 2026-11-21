@@ -40,7 +40,7 @@ int main(){
  assert(p.turbo);
  r.buttons=0;p=d.tick(r,true,2000);
  r.buttons=32;p=d.tick(r,true,2050);
- assert(!p.direct);
+ assert(p.direct); // RB can no longer enable pulse mode.
  // invalid/stale input kills traction
  r.fresh=false;r.raw_rt=1023; p=d.tick(r,true,2100);
  assert(!p.armed&&p.data[1]==0&&p.data[2]==0);

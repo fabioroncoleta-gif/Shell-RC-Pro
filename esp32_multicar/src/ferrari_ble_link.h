@@ -2,8 +2,8 @@
 /*
  * Ferrari Shell BLE client for the Bluepad32/BTstack ESP32 core.
  * HCI/GATT functions MUST run on BTstack Core0, NEVER Arduino Core1.
- * Only accepts one whitelisted SL-488 Challenge Evo MAC.
- * Stage 1 firmware sends neutral packet only; no motor commands.
+ * Owns the selected player-1 Shell FFF1 car; excludes player 2.
+ * Ready requires a writable FFF1 characteristic and initial neutral write.
  */
 #include <Arduino.h>
 #include <atomic>
@@ -20,7 +20,7 @@ extern "C" {
 namespace ferrarible {
 enum class State : uint8_t { IDLE=0, SCANNING=1, CONNECTING=2,
     DISCOVERING=3, READY=4, FAILED=5, SELECTING=6, DISCONNECTING=7 };
-enum class Action : uint8_t { REGISTER=1, SCAN=2, SEND_NEUTRAL=3, DISCONNECT=4, SEND_PACKET=5, RECOVER_XBOX_SCAN=6, RECOVER_XBOX_LINK=7 };
+enum class Action : uint8_t { REGISTER=1, SCAN=2, SEND_NEUTRAL=3, DISCONNECT=4, SEND_PACKET=5, RECOVER_XBOX_SCAN=6, RECOVER_XBOX_LINK=7, PAIR_SECOND=8 };
 static const uint8_t kNeutral[8] = {1,0,0,0,0,0,0,0};
 static uint8_t pendingPacket[8] = {1,0,0,0,0,0,0,0};
 static uint8_t transferPacket[8] = {1,0,0,0,0,0,0,0};
@@ -69,6 +69,7 @@ static uint8_t switchNeutral[8]={1,0,0,0,0,0,0,0};
 static bool switchPending=false;
 static uint32_t switchSince=0;
 static bool validatingLink=false;
+static uint32_t lastWriteSuccessMs=0;
 static void fleetTick();
 static void printFleet() {
     Serial.printf("FLEET_BEGIN,COUNT=%d\n",fleet.count);
@@ -131,6 +132,7 @@ static const char* label(State s) {
     }
 }
 static void markCarReady() {
+    lastWriteSuccessMs=millis();
     controlBlocked.store(false);
     set(State::READY);mustDisarm.store(true);
     if(!shellrc::Fleet::same(fleet.preferred,kTarget)){
@@ -161,7 +163,7 @@ static void gattCallback(uint8_t packetType, uint16_t channel,
         if(queryIsWrite) {
             queryIsWrite=false;
             if(err != 0) { set(State::FAILED); mustDisarm.store(true); }
-            else { ++writeCount; if(validatingLink){validatingLink=false;markCarReady();}else set(State::READY); }
+            else { lastWriteSuccessMs=millis(); ++writeCount; if(validatingLink){validatingLink=false;markCarReady();}else set(State::READY); }
             return;
         }
         if(err != 0 || !writeHandle) {
@@ -247,6 +249,7 @@ static void onHci(uint8_t packetType,uint16_t channel,uint8_t* packet,uint16_t s
             }
             at+=n+1;
         }
+        if(secondCarOwns(addr))return;
         fleet.observe(addr,gap_event_advertising_report_get_address_type(packet),name,
             gap_event_advertising_report_get_rssi(packet));
     } else if(eventType==HCI_EVENT_LE_META) {
@@ -276,12 +279,23 @@ static void onHci(uint8_t packetType,uint16_t channel,uint8_t* packet,uint16_t s
             lastError.store(err);
             if(err) { set(State::FAILED); mustDisarm.store(true); return; }
             handle=hci_subevent_le_connection_complete_get_connection_handle(packet);
+            const uint16_t interval=hci_subevent_le_connection_complete_get_conn_interval(packet);
+            const uint16_t timeout=hci_subevent_le_connection_complete_get_supervision_timeout(packet);
+            Serial.printf("CAR_BLE_TIMING,INTERVAL_UNITS=%u,INTERVAL_US=%lu\n",unsigned(interval),(unsigned long)interval*1250u);
+            const int timingErr=gap_update_connection_parameters(handle,6,12,0,timeout);
+            Serial.printf("CAR_BLE_TIMING,REQUEST_MIN_US=7500,MAX_US=15000,STATUS=%d\n",timingErr);
             writeHandle=0;writeProps=0;queryIsWrite=false;
             ++connections;
             set(State::DISCOVERING);
             err=gatt_client_discover_characteristics_for_handle_range_by_uuid16(
                     &gattCallback,handle,1,0xffff,0xfff1);
             if(err) {lastError.store(err);set(State::FAILED);mustDisarm.store(true);}
+        }
+        else if(hci_event_le_meta_get_subevent_code(packet)==HCI_SUBEVENT_LE_CONNECTION_UPDATE_COMPLETE &&
+                hci_subevent_le_connection_update_complete_get_connection_handle(packet)==handle) {
+            const uint8_t status=hci_subevent_le_connection_update_complete_get_status(packet);
+            const uint16_t interval=hci_subevent_le_connection_update_complete_get_conn_interval(packet);
+            Serial.printf("CAR_BLE_TIMING,UPDATE_STATUS=%u,ACTUAL_INTERVAL_US=%lu\n",unsigned(status),(unsigned long)interval*1250u);
         }
         else if(hci_event_le_meta_get_subevent_code(packet)==HCI_SUBEVENT_LE_CONNECTION_UPDATE_COMPLETE &&
                 hci_subevent_le_connection_update_complete_get_connection_handle(packet)==xboxHandle) {
@@ -343,6 +357,11 @@ static void fleetTick() {
     // Bound failed / obsolete-generation peers: never hold up the fleet indefinitely.
     // All HCI work stays on the BTstack/Core0 thread.
     const State phase=current();
+    if(phase==State::READY && lastWriteSuccessMs && uint32_t(millis()-lastWriteSuccessMs)>1800u){
+        controlBlocked.store(true);mustDisarm.store(true);set(State::DISCONNECTING);
+        if(handle!=HCI_CON_HANDLE_INVALID)gap_disconnect(handle);
+        Serial.printf("CAR,WRITE_STALL_RECOVERY,AGE_MS=%lu,ERR=%u,DISARMED,START_REQUIRED\n",(unsigned long)uint32_t(millis()-lastWriteSuccessMs),unsigned(lastError.load()));return;
+    }
     const uint32_t age=uint32_t(millis()-lastEventMs.load());
     if(phase==State::CONNECTING && age>=3500u){
         lastError.store(0xEE);
@@ -370,7 +389,9 @@ static void fleetTick() {
         set(State::IDLE);
     }
     if(current()==State::SCANNING && uint32_t(millis()-scanStartedAt)>=2400u){
-        uni_bt_le_scan_stop();printFleet();int chosen=fleet.choose();
+        uni_bt_le_scan_stop();
+        for(int i=0;i<fleet.count;i++)if(secondCarOwns(fleet.cars[i].address))fleet.cars[i].rejected=true;
+        printFleet();int chosen=fleet.choose();
         if(chosen<0){set(State::SELECTING);Serial.println("FLEET_WAIT,SELECT_ON_PC_OR_DPAD");return;}
         memcpy(kTarget,fleet.cars[chosen].address,6);
         uint8_t err=gap_connect(kTarget,bd_addr_type_t(fleet.cars[chosen].type));
@@ -408,6 +429,9 @@ static void runRequest(void* context) {
             set(State::SCANNING);
         }
         break;
+      case Action::PAIR_SECOND:
+        if(!xboxHciConnected.load()){uni_bt_enable_new_connections_unsafe(true);uni_bt_le_scan_start();Serial.println("BT_PAIRING,SECOND_CONTROLLER_SCAN_ACTIVE");}
+        break;
       case Action::RECOVER_XBOX_SCAN:
         if(current()!=State::READY && current()!=State::CONNECTING &&
            current()!=State::DISCOVERING && !xboxHciConnected.load()) {
@@ -443,6 +467,7 @@ static void runRequest(void* context) {
                 err=gatt_client_write_value_of_characteristic_without_response(
                     handle,writeHandle,sizeof(transferPacket),transferPacket);
                 if(err==0) {
+                    lastWriteSuccessMs=millis();
                     ++writeCount;
                     if(requestedAction==Action::SEND_PACKET) ++dataWrites;
                 }

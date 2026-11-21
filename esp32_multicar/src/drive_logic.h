@@ -16,22 +16,25 @@ struct CarPacket {
     bool handbrake=false;
     bool turbo=false;
     bool direct=true;
-    bool reverseFull=false;
+    bool reverseFull=true;
 };
 
 class DriveModel {
  public:
     void resetMotion(uint32_t now) {
-        if(direction_ != 0) neutralUntil_=now+420;
-        duty_=0;rate_=0;filtered_=0;phase_=0;
+        (void)now;
+        // Releasing the trigger is an immediate STOP and must not add a
+        // 420ms dead period to the next command in the same direction.
+        // Direction reversals alone set a short protective neutral window.
+        neutralUntil_=0;
+        duty_=0;rate_=0;filtered_=0;
         direction_=0;boostActive_=false;
     }
     void resetAll(uint32_t now) {
         resetMotion(now);
         prevButtons_=0; brakeHeld_=false; brakeHeading_=0;
         waitNeutral_=false;
-        turbo_=false;lights_=0;direct_=true;
-        reverseFull_=false;reverses_=0;lastReversePeak_=0;reverseReleased_=true;
+        turbo_=false;lights_=0;
         lastUpdate_=now;phaseLight_=0;
     }
     CarPacket tick(const RoutedState& r,bool carReady,uint32_t now) {
@@ -45,13 +48,13 @@ class DriveModel {
             if(newPress(0)) changeLights(1,now); // A steady
             if(newPress(2)) changeLights(2,now); // X fade
             if(newPress(3)) changeLights(3,now); // Y strobe
-            if(newPress(5)) direct_=!direct_;    // RB mode
+            // RB has no motor mode: forward and reverse are always continuous.
             if(newPress(1)) turbo_=!turbo_;      // B turbo toggle
         }
         prevButtons_=r.fresh?mask:0;
-        o.direct=direct_;
+        o.direct=true;
         o.turbo=turbo_;
-        o.reverseFull=reverseFull_;
+        o.reverseFull=true;
         if(!r.fresh||!r.armed||!carReady) {
             resetMotion(now);
             brakeHeld_=false;
@@ -88,12 +91,12 @@ class DriveModel {
             if(lt<.07f && rt<.07f) waitNeutral_=false;
             else {resetMotion(now); return o;}
         }
-        reverseUnlock(lt,now);
         int want=(rt>.085f&&lt<=.085f)?1:
                  (lt>.085f&&rt<=.085f)?-1:0;
         if(want==0) { resetMotion(now); return o; }
         if(direction_ && want!=direction_) {
             resetMotion(now);
+            neutralUntil_=now+160u; // safe transition between forward and reverse
             return o;
         }
         if((int32_t)(now-neutralUntil_)<0) return o;
@@ -108,7 +111,6 @@ class DriveModel {
         const float exp=(want<0)?1.40f:1.25f;
         float target=(normal>0)?minDuty+(1.f-minDuty)*powf(normal,exp):0.f;
         if(trigger>=.96f) target=1.f;
-        if(want<0&&!reverseFull_) target*=.5f;
         float up=(want<0)?.78f:1.1f;
         float down=(want<0)?1.8f:2.6f;
         float desired=limit((target-duty_)*6.f,-down,up);
@@ -119,24 +121,16 @@ class DriveModel {
         }
         duty_=limit(next,0.f,1.f);
         if(target>=.999f&&duty_>=.97f) {duty_=1.f;rate_=0;}
-        o.duty=duty_;
-        const bool limitedReverse=(direction_<0&&!reverseFull_);
-        const bool pulseMode=!direct_ || limitedReverse;
-        bool active=false;
-        if(!pulseMode) {
-            active=(direction_!=0&&trigger>=.13f);
-        } else if(duty_>=.999f) {
-            active=true;phase_=0;
-        } else if(duty_>.001f) {
-            phase_+=duty_;
-            if(phase_>=1.f) {active=true;phase_-=1.f;}
-        }
-        if(!limitedReverse && turbo_ && duty_>=.80f) boostActive_=true;
-        if(duty_<.55f||limitedReverse||!turbo_) boostActive_=false;
+        // FFF1 motor commands are binary. No pulse-density modulation,
+        // no periodic zero packets and no hidden reverse speed limiter.
+        const bool active=(direction_!=0 && trigger>=.13f);
+        o.duty=active?1.f:0.f;
+        if(direction_==1 && turbo_ && duty_>=.80f) boostActive_=true;
+        if(duty_<.55f || direction_<0 || !turbo_) boostActive_=false;
         if(active&&direction_==1)o.data[1]=1;
         else if(active&&direction_==-1)o.data[2]=1;
         o.data[6]=boostActive_?1:0;
-        o.reverseFull=reverseFull_;
+        o.reverseFull=true;
         return o;
     }
  private:
@@ -155,22 +149,12 @@ class DriveModel {
         if(phaseLight_>=1.f) {phaseLight_-=1.f;return true;}
         return false;
     }
-    void reverseUnlock(float lt,uint32_t now) {
-        if(reverseFull_)return;
-        if(lt<.18f) reverseReleased_=true;
-        else if(lt>=.94f && reverseReleased_) {
-            if(reverses_ && uint32_t(now-lastReversePeak_)>3000u) reverses_=0;
-            reverseReleased_=false;
-            lastReversePeak_=now;
-            if(++reverses_>=3) reverseFull_=true;
-        }
-    }
-    uint32_t lastUpdate_=0,neutralUntil_=0,lastReversePeak_=0,lightSince_=0;
-    float duty_=0,rate_=0,filtered_=0,phase_=0,phaseLight_=0;
+    uint32_t lastUpdate_=0,neutralUntil_=0,lightSince_=0;
+    float duty_=0,rate_=0,filtered_=0,phaseLight_=0;
     float lockedSteer_=0;
     int direction_=0,brakeHeading_=0;
-    uint8_t prevButtons_=0,lights_=0,reverses_=0;
-    bool turbo_=false,direct_=true,reverseFull_=false,reverseReleased_=true;
+    uint8_t prevButtons_=0,lights_=0;
+    bool turbo_=false;
     bool brakeHeld_=false,waitNeutral_=false,boostActive_=false;
 };
 }

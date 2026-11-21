@@ -1,0 +1,1 @@
+9f9e45625d83c969bf3ffab83a01328ca7be568881eabe39749b346901812cc5  firmware/versions/v1.4.18-usb360-status-heartbeat/esp32_multicar.ino.bin

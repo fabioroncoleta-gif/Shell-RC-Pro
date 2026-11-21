@@ -40,6 +40,16 @@ class Router {
 public:
     static constexpr uint32_t kWatchdogMs = 550;
     static constexpr uint32_t kNeutralArmMs = 650;
+    // Optional standalone mode: after the selected car is READY, arm only
+    // after a neutral input for 650ms. Never auto-arm while BLE car is absent.
+    void enableAutoArm(bool enabled) { autoArm_=enabled; }
+    void allowAutoArm(bool allowed) {
+        if (autoArmEligible_ != allowed) {
+            autoArmEligible_=allowed;
+            autoNeutralSince_=0;
+            if (!allowed) resetArming();
+        }
+    }
     void setMode(Mode m) {
         if (mode_ == m) return;
         mode_ = m;
@@ -70,6 +80,7 @@ public:
         lastStart_ = false;
         lastBack_ = false;
         neutralSince_ = 0;
+        autoNeutralSince_ = 0;
     }
     RoutedState tick(uint32_t now) {
         Source requested = Source::NONE;
@@ -93,7 +104,10 @@ public:
             selected_ = requested;
         }
         out.source = requested;
-        if (requested == Source::NONE) return out;
+        if (requested == Source::NONE) {
+            autoNeutralSince_=0;
+            return out;
+        }
         const GamepadSample& in = requested == Source::BLUETOOTH ? bluetooth_ : usb_;
         out.fresh = true;
         out.raw_steer = in.steer;
@@ -108,10 +122,22 @@ public:
         if (backEdge) resetArming();
         else if (startEdge) {
             if (armed_) resetArming();
-            else if (neutral) {
+            else if (neutral && (!autoArm_ || autoArmEligible_)) {
                 armPending_ = true;
                 neutralSince_ = now;
             }
+        }
+        // Auto-enable is only allowed while the assigned car is validated
+        // READY. Neutral (both triggers released, steering centered) is
+        // mandatory before drive commands can be forwarded.
+        if(autoArm_ && autoArmEligible_ && !armed_) {
+            if(neutral && !in.back && !in.lb) {
+                if(autoNeutralSince_==0)autoNeutralSince_=now?now:1u;
+                if(uint32_t(now-autoNeutralSince_)>=kNeutralArmMs)
+                    armed_=true;
+            } else autoNeutralSince_=0;
+        } else if(!autoArmEligible_){
+            autoNeutralSince_=0;
         }
         if (armPending_) {
             if (!neutral) armPending_ = false;
@@ -138,12 +164,14 @@ private:
     bool fresh(const GamepadSample& i, bool has, uint32_t when, uint32_t now) const {
         return has && i.connected && uint32_t(now - when) <= kWatchdogMs;
     }
-    void resetArming() { armed_ = false; armPending_ = false; }
+    void resetArming() { armed_ = false; armPending_ = false; autoNeutralSince_=0; }
     Mode mode_ = Mode::AUTO;
     Source selected_ = Source::NONE;
     GamepadSample bluetooth_, usb_;
     uint32_t timeBt_ = 0, timeUsb_ = 0, neutralSince_ = 0;
     bool hasBt_ = false, hasUsb_ = false;
+    uint32_t autoNeutralSince_ = 0;
+    bool autoArm_ = false, autoArmEligible_ = false;
     bool armed_ = false, armPending_ = false, lastStart_ = false, lastBack_ = false;
 };
 
