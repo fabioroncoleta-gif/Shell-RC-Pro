@@ -28,3 +28,12 @@ HW_PWM/toolchain/
 **/build/
 # Artefatos auxiliares
 .DS_Store
+
+# Dados locais de diagnóstico e credenciais adicionais
+diagnostics/
+**/validation.json
+*.pfx
+*.keystore
+credentials.json
+service-account*.json
+.gitleaks-report*
