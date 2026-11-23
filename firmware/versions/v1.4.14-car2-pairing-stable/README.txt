@@ -1,0 +1,1 @@
+2026-11-20 v1.4.14: compile flash verified; decouple car2 scanner from transient USB HID freshness; refresh main-loop time after USB polling; extra car2 scan diagnostics; physical second car detection pending.

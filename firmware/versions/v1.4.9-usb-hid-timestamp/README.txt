@@ -1,0 +1,1 @@
+2026-11-20: installed v1.4.9; real USB HID report timestamps, no old trigger replay, fail-closed 220ms input timeout, post-USB-poll timestamp, reduced dual-BLE intervals. Physical press-and-release test still pending with cars off.

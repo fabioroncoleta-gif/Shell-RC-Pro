@@ -1,0 +1,1 @@
+Build flashed with verified hash 2026-11-20. Actual Xbox360 HID report freshness required, 220ms fail-closed on missing packets. Changed BLE TX 12ms/50ms car1 and 18ms/55ms car2, serial telemetry 400ms. Pending physical hold/release test with cars powered OFF; do not declare full validation.

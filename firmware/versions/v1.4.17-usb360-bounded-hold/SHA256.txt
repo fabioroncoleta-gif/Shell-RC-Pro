@@ -1,0 +1,1 @@
+406148f06b61a0254408c1f89ad32576f8971b9afb70489b5c5ade3226d3fd33  firmware/versions/v1.4.17-usb360-bounded-hold/esp32_multicar.ino.bin

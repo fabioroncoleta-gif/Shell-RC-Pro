@@ -1,0 +1,1 @@
+59f6a74bbb29f86017975ee9c5a78d9f95f2582ecde1bddc008168965e066652  firmware/versions/v1.4.9-usb-hid-timestamp/esp32_multicar.ino.bin

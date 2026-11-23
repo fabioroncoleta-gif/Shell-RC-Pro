@@ -1,0 +1,1 @@
+v1.4.10 flash verified. Fix event-driven Xbox360 idle packets: preserve pairing, neutralize stale input every 75ms after 220ms, only real HID packets carry drive/buttons. Post-flash USB Host TASK A0 ENUM_ERR 0D requires receiver electrical re-enumeration before physical validation; do not claim connected until USB_DIAG shows TASK 90 ENUM_ERR 00 RECEIVER 1.

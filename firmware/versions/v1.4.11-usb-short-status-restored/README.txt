@@ -1,0 +1,1 @@
+Firmware compiled and flashed 2026-11-20; 11 host tests pass. Restore 2-byte Xbox360 receiver association and detach notifications; prevent old buffer reuse; preserve no-motor when input stale. USB hrJERR 0D during post-flash start may require 5V receiver re-enumeration; physical validation pending.

@@ -1,0 +1,1 @@
+v1.4.15, 2026-11-20: compile PASS, flash verified. USB360 radio-paired state permits car discovery but NOT motor actuation until real HID; GATT FFF1 discovery retried twice; motor watchdog retained. SF90 FFF1 was independently verified by Linux BlueZ and supports write+write-without-response.

@@ -1,3 +1,7 @@
+HISTORICO — APLICATIVO PYTHON PARA PC (31/10/2026)
+Para o firmware atual v1.4.19, consulte docs/GUIA_ATUAL.md.
+BACK no segundo canal nao possui a mesma reconexao explicita do primeiro.
+
 SHELL RC PRO | BACK / SELECT = RECONEXAO RAPIDA
 Configurado em 31/10/2026
 

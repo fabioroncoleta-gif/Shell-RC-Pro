@@ -1,0 +1,1 @@
+Compile PASS, flash verified on 2026-11-20. Automatically arm after 650ms verified neutral while BLE car READY, preserves stale packet fail-safe, removes 420ms repeated-trigger delay (160ms reversal only), guards early Bluepad32 LED output. Physical motor trigger release and second Xbox HID tests remain pending.

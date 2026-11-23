@@ -1,0 +1,1 @@
+7a43aca880e8c0cff99171b82c13e9344ba8e374d7c160fdb290347456ba5b5b  firmware/versions/v1.4.11-usb-short-status-restored/esp32_multicar.ino.bin

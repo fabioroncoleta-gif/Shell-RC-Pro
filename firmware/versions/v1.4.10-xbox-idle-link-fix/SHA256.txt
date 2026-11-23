@@ -1,0 +1,1 @@
+44d276fd5d09b8b1314485772e01a447d7c1cc9e2d2663cbfbf100c7556097a9  firmware/versions/v1.4.10-xbox-idle-link-fix/esp32_multicar.ino.bin

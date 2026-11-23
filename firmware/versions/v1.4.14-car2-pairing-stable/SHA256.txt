@@ -1,0 +1,1 @@
+f111d24246ec63c6498b84779f40750337d4e15c042d60be336d6b04c0821a83  firmware/versions/v1.4.14-car2-pairing-stable/esp32_multicar.ino.bin

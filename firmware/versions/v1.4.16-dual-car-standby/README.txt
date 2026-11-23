@@ -1,0 +1,1 @@
+v1.4.16, 2026-11-20. Build and flash pass. Second BLE vehicle can connect while controller 2 offline; neutral standby remains. GATT FFF1 retry bounded. Motor commands remain blocked without fresh HID input. Physical dual-car connection validation pending.

@@ -1,0 +1,1 @@
+82bccd4fbab65aa4cfdad6eda1dd802c3b953910606893f263b35bd889f089ef  firmware/versions/v1.4.15-sf90-gatt-retry/esp32_multicar.ino.bin

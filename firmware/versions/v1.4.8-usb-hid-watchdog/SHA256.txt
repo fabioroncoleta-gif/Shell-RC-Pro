@@ -1,0 +1,1 @@
+5dd0299419b01a21a0cc158407de892013ace1333d2ef59aca3972bae7bebae6  firmware/versions/v1.4.8-usb-hid-watchdog/esp32_multicar.ino.bin

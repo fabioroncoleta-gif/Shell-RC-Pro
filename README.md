@@ -1,91 +1,56 @@
-# Shell RC Pro — Ferrari Shell + controle Xbox 360
+# Shell RC Pro — versão oficial v1.4.19
 
-**Versão atual validada por Fábio: ESP32 Multicar v1.3.0.** Manter esta versão instalada.
-[Backup validado e checksum](firmware/validated/v1.3.0/) · [Versão fixada](firmware/CURRENT_VALIDATED.json).
+Versão validada por Fábio em **21/11/2026**: dois controles Xbox e dois carrinhos Shell/Ferrari simultaneamente, com melhora da resposta do Xbox 360. Documentação revisada em 23/11/2026 sem alteração do firmware.
 
+- [Código completo, dependência USB incluída e testes](esp32_multicar/).
+- [Guia atual: montagem, comandos e funcionamento](docs/GUIA_ATUAL.md).
+- [Firmware oficial e checksum](firmware/versions/v1.4.19-usb360-fast-poll/).
+- [Identificação da versão validada](firmware/CURRENT_VALIDATED.json).
+- [Histórico de backups](firmware/versions/README.md). A v1.4.18 permanece disponível para retorno.
 
-## ESP32 Multicar — v1.3.0 (01/11/2026)
+## Conjunto atual
 
-Descoberta de carrinhos Shell BLE e troca pelo painel do PC ou pelo direcional
-esquerdo/direito do Xbox, com desarme e novo START obrigatório. A ESP32 já
-detectou e conectou a **SL-SF-25** em READY, com FFF1 gravável e sem erro BLE.
+| Componente | Função |
+| --- | --- |
+| ESP32 clássico com Bluetooth Classic/BLE | Central autônoma alimentada por USB |
+| USB Host MAX3421E + receptor Xbox 360 sem fio | Entrada do Xbox 360 |
+| Xbox Wireless Bluetooth compatível com Bluepad32 | Segunda entrada, pelo rádio da ESP32 |
+| Dois carrinhos Shell/Ferrari BLE compatíveis com FFF1 | Canais de controle independentes; F80 e SF90 XX Stradale usados na validação |
 
-- [Uso, compatibilidade e evidências](esp32_multicar/README.md).
-- [Firmware multicar e checksum](firmware/versions/v1.3.0/).
-- A versão validada v1.2.2 permanece disponível para reversão.
+O primeiro controle com dados válidos recebe o primeiro canal de carro; o segundo recebe o outro. A descoberta dos carros, a validação GATT e a recuperação de conexão são independentes. O firmware atual funciona sem tela e sem notebook no caminho dos comandos.
 
+## Comandos da versão oficial
 
-## ESP32 independente — versão validada v1.2.2 (01/11/2026)
+| Comando | Função |
+| --- | --- |
+| Analógico esquerdo | Direção esquerda/direita digital |
+| RT / LT | Frente / ré contínuas, sem pulsos de motor |
+| LB mantido | Neutro do motor e preservação do comando de direção durante o acionamento |
+| B | Alterna turbo |
+| A | Alterna farol fixo |
+| X | Alterna efeito fade do farol |
+| Y | Alterna strobo |
+| RB | Sem função de alternar pulsos no firmware atual |
+| START | Comando de armar/desarmar; o modo automático também pode rearmar após neutro |
+| BACK | Desarma; no primeiro canal também solicita reconexão BLE |
 
-Agora o Xbox Bluetooth e a Ferrari Shell podem ser controlados diretamente pela
-ESP32, alimentada por USB, sem notebook no caminho dos comandos.
-Fábio validou o funcionamento e os comandos mantidos.
+**Armar automaticamente:** carro READY, entrada válida, gatilhos soltos e direção centralizada por 650 ms. START não é obrigatório para a liberação automática. START e BACK não são travas permanentes: o sistema pode rearmar após novo período em neutro.
 
-- [Código e instruções de operação](esp32_ferrari_standalone/README.md).
-- [Firmware validado e SHA256](firmware/validated/v1.2.2/).
-- [Painel local de diagnóstico](esp32_dashboard/).
+**Tração digital:** o pacote BLE exposto pelo projeto liga/desliga frente e ré. Sem pulsos não há velocidade física proporcional ao gatilho nem limite de ré a 50% ou desbloqueio por três toques. A rampa interna auxilia a temporização do turbo; não modula a potência do motor. LB não trava mecanicamente o eixo e preserva o comando, sem sensor de ângulo das rodas.
 
-O ciclo físico com fonte externa ainda deve ser confirmado. Para usar, ligue os
-dispositivos, mova o analógico para enviar o primeiro comando e arme com START
-em neutro. O aplicativo Python abaixo continua disponível como versão para PC.
+## Compilar
 
-
-Aplicativo experimental em Python para controlar miniaturas **Shell Racing Legends** Bluetooth Low Energy (BLE) pelo controle Xbox 360 conectado ao Linux. Desenvolvido e testado no Ubuntu 24.04.
-
-> **Estado:** versao de referencia de 31/10/2026. Os 60 testes automatizados foram aprovados localmente. A integracao fisica, especialmente com diferentes modelos de Ferrari e recuperacao de falhas BLE, exige testes de bancada.
-
-## Recursos
-
-- Busca e selecao de multiplas Ferraris Shell BLE, com escolha pela interface (teclas 1–9).
-- Conexao GATT em caracteristica FFF1 para modelos compativeis.
-- RT: acelerar; LT: marcha re, com limite aproximado de 50% e triplo acionamento de LT para liberar o modo completo.
-- LB: corta tracao e preserva o comando de direcao; RB: alterna modo de tracao (somente desarmado).
-- B: turbo; A/X/Y: modos de farol; START: armar/desarmar.
-- BACK/Select: reset rapido e reconexao prioritaria com a mesma Ferrari. Atalho F5.
-- Watchdog de entrada Xbox e timeout de transmissoes BLE.
-- Modo de simulacao (padrao) sem enviar comandos reais.
-
-**Limites tecnicos:** a placa Shell original oferece comandos digitais. Redução de potencia por pulsos e uma aproximacao temporal, nao controle proporcional eletrico verdadeiro. O projeto PWM ESP32 em `HW_PWM/` e experimental e depende de validacao eletrica; nao esta integrado automaticamente ao carrinho.
-
-## Instalar (Ubuntu 24.04 / Python 3.12)
+Arduino CLI, pacote `esp32-bluepad32` 4.1.0 e placa `esp32-bluepad32:esp32:esp32`. A biblioteca USB Host Shield 2.0 modificada está em `esp32_multicar/vendor` e deve ser usada na compilação.
 
 ```bash
-git clone https://github.com/fabioroncoleta-gif/Shell-RC-Pro.git
-cd Shell-RC-Pro
-./instalar.sh
+arduino-cli compile --fqbn esp32-bluepad32:esp32:esp32 \
+  --libraries esp32_multicar/vendor esp32_multicar
 ```
 
-## Executar
+O binário salvo é o aplicativo ESP32, gravado em `0x10000` sobre instalação com bootloader e partições compatíveis. Não é imagem completa para placa vazia. Consulte o guia antes de gravar; a revisão documental não altera a placa nem os pareamentos.
 
-```bash
-./run.sh             # simula, NAO move o carro
-./run.sh --live      # envia comandos a uma Ferrari real
-```
+## Histórico do projeto
 
-O instalador cria `config.json` a partir de `config.example.json`. O arquivo de configuracao real, o cadastro `fleet.json`, enderecos BLE pessoais e logs **nao sao versionados**.
+O aplicativo Python para PC, `esp32_ferrari_standalone/`, os backups v1.2.2/v1.3.x e `HW_PWM/` permanecem preservados. Suas instruções e recursos pertencem às respectivas versões e não definem o comportamento da v1.4.19. O projeto PWM é experimental e separado.
 
-Para escolher um carrinho, ligue-o e use as teclas 1–9 na interface; R faz nova busca. O programa so envia comandos depois de conectar, verificar FFF1 e voce armar com START. Cada modelo requer validacao de compatibilidade fisica.
-
-## Testes
-
-```bash
-.venv/bin/python -m unittest discover -p 'test_*.py' -q
-```
-
-Os testes de BLE usam simulacoes; `test_xbox_buttons.py` pode ser rodado manualmente para exercitar o receptor Xbox real.
-
-## Seguranca
-
-**Teste inicial com as rodas suspensas.** O botao BACK nao faz corte eletrico: se o brinquedo perder o controle, desligue-o fisicamente. Nao teste na rua. Nao use o modo PWM hibrido sem inspecao e isolamento eletrico do driver do motor.
-
-## Estrutura
-
-- `shell_rc_xbox360.py`: programa principal e comunicacao Bluetooth.
-- `motor_profile.py`: tratamento de movimento, rampas e limites.
-- `reverse_safety.py`: desbloqueio de marcha re via LT x3.
-- `car_discovery.py`: descoberta, selecao e historico de carrinhos.
-- `light_effects.py`: farois.
-- `HW_PWM/`: projeto experimental de motor PWM.
-- `test_*.py`: testes de regressao.
-
-Este repositório e uma copia limpa do projeto local. Os backups do computador e os pacotes do Arduino/ESP32 nao foram incluidos.
+Primeiro teste com rodas suspensas. Em perda de BLE, a central pode não conseguir entregar o pacote de parada; desligar o carro é o corte físico disponível.

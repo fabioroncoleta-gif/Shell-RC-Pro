@@ -1,0 +1,1 @@
+5f52cb3fe36b1a0b51532742e64ca4ecefc2a93c9068e76446bdd1e7a8f469ec  firmware/versions/v1.4.12-car-link-independent/esp32_multicar.ino.bin
